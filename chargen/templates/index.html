@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Character Generator</title>
+        <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            var RANKS = {
+                5: "County Magistrate",
+                6: "Deputy Provincial Minister",
+                7: "Provincial Minister",
+                8: "Governor",
+                9: "Deputy Minister",
+                10: "Minister",
+                11: "Councilor",
+                12: "Daimyo"
+            };
+            var TAGS = [
+                "Shiro Ryusei",
+                null,
+                "Honshu province", "Kansai province", "Maebashi province", "Nagano province", "Yokohama province",
+                null,
+                "Ministry of Justice", "Ministry of Works", "Ministry of War", "Ministry of Rites", "Ministry of Retainers", "Ministry of Revenue",
+                null
+            ];
+            
+            var dom = {};
+            $(function(){
+                $.each(["rank","type","generate","upload","fields","checkboxes"], function(i,s){
+                    dom["$" + s] = $("#" + s);
+                });
+                dom.$upload.attr("disabled", true);
+                for(var rank=2; rank<=12; rank++) {
+                    dom.$rank.append(
+                        $("<option/>").val(rank).text(rank in RANKS ? (rank + " - " + RANKS[rank]) : rank))
+                }
+                
+                dom.$generate.on("click", function() {
+                    $.getJSON("generate", {rank: dom.$rank.val(), type: dom.$type.val()}, function(character) {
+                        if (character.error) {
+                            alert(character.error);
+                        } else {
+                            dom.$fields.empty();
+                            dom.$checkboxes.empty();
+                            dom.$upload.attr("disabled", false);
+                            
+                            var tags = [];
+                            if (character.lineage) {
+                                tags.push(character.lineage + " lineage");
+                            }
+                            if (dom.$rank.val() in RANKS) {
+                                tags.push(RANKS[dom.$rank.val()]);
+                            }
+                            
+                            var fields = [
+                                $('<input type="text" id="name" />').val(character.name),
+                                $('<input type="text" id="tags" />').val(tags.join(", ")),
+                                $('<textarea rows="10" id="public" />').text(character.public),
+                                $('<textarea rows="10" id="private" />').text(character.private)
+                            ];
+                            $.each(fields, function(i, $field) {
+                                dom.$fields.append(
+                                    $field.css("width", "100%")
+                                ).append("<br/>");
+                            });
+                            
+                            $.each(TAGS, function(i, tag) {
+                                if (tag) {
+                                    dom.$checkboxes.append(
+                                        $('<input type="checkbox" />').data("tag", tag)
+                                    ).append(tag);
+                                }
+                                dom.$checkboxes.append("<br/>");
+                            });
+                        }
+                    });
+                });
+                
+                dom.$upload.on("click", function() {
+                    var $tags = $("#tags");
+                    var tags = $tags.val();
+                    dom.$checkboxes.find(":checkbox:checked").each(function(){
+                        tags += ", " + $(this).data("tag");
+                    });
+                    $tags.val(tags);
+                    
+                    var params = {};
+                    $.each(["name","tags","public","private"], function(i, param) {
+                        params[param] = $("#" + param).val()
+                    });
+                    $.getJSON("upload", params, function(resp) {
+                        if (resp.error) {
+                            alert(resp.error);
+                        } else {
+                            dom.$upload.attr("disabled", true);
+                            dom.$checkboxes.empty();
+                            dom.$fields.empty().append(
+                                $("<b/>").text(params.name + " has been uploaded")
+                            ).append("<br/>").append(
+                                $('<a target="_blank" />').attr("href", resp.view_url).text("View")
+                            ).append("&nbsp;&nbsp;&nbsp;&nbsp;").append(
+                                $('<a target="_blank" />').attr("href", resp.edit_url).text("Edit")
+                            );
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        Rank:
+        <select id="rank"></select>
+        <select id="type">
+            <option>Ryusei</option>
+            <option>Natsune</option>
+            <option>Peasant</option>
+        </select>
+        <button id="generate">Generate</button>
+        <button id="upload">Upload</button>
+        <table width="100%">
+        <tr>
+            <td width="60%" id="fields" />
+            <td width="40%" id="checkboxes" valign="top" align="left" style="padding-top:10px ; padding-left:10px" />
+        </tr>
+        </table>
+    </body>
+</html>

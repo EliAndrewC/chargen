@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Tag Search</title>
+        <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(function() {
+                $.getJSON("read", function(data) {
+                    var filterCharacters = function() {
+                        $(".character").hide();
+                        var filters = {include: []};
+                        $.each(filters, function(criteria, xs) {
+                            $("#" + criteria + " :checkbox:checked").each(function(){
+                                xs.push("." + $(this).data("tag"));
+                            });
+                        });
+                        $(filters.include.join("")).show();
+                        $("#count").empty().append($(".character:visible").size() + " characters");
+                    };
+                    
+                    var tags = [];
+                    $.each(data.tags, function(i, tag) {
+                        if (tag.indexOf(" county") === -1) {
+                            tags.push(tag);
+                        }
+                    });
+                    
+                    var count = 0, columns = $("#include td").size();
+                    $.each(tags, function(i, tag) {
+                        $("#include td:nth-of-type(" + Math.max(1, Math.ceil(columns * i / tags.length)) + ")").append(
+                            $('<input type="checkbox" />').data("tag", tag.replace(/ /g, "-"))
+                                                          .on("click", filterCharacters)
+                        ).append(tag).append("<br/>");
+                    });
+                    
+                    $.each(data.characters, function(i, character) {
+                        var $character = $('<div class="character" />').append(
+                            $("<a/>").attr("href", character.character_url).attr("target", "_blank").append(
+                                character.name));
+                        $.each(character.tags.sort(), function(i, tag) {
+                            $character.append(" &nbsp; [" + tag + "]").addClass(tag.replace(/ /g, "-"));
+                        });
+                        $character.appendTo("#characters");
+                    });
+                    
+                    filterCharacters();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <table width="100%" border="2" cellpadding="10"><tr>
+            <td id="include">
+                <table width="100%"><tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr></table>
+            </td>
+        </tr></table>
+        <hr/>
+        <div id="count"></div>
+        <div id="characters"></div>
+    </body>
+</html>
