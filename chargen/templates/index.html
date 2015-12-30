@@ -2,8 +2,8 @@
 <html>
     <head>
         <title>Character Generator</title>
-        <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-        <script type="text/javascript">
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <script>
             var RANKS = {
                 5: "County Magistrate",
                 6: "Deputy Provincial Minister",
@@ -24,28 +24,28 @@
             ];
             
             var dom = {};
-            $(function(){
-                $.each(["rank","type","generate","upload","fields","checkboxes"], function(i,s){
-                    dom["$" + s] = $("#" + s);
+            $(function () {
+                $.each(['rank', 'type', 'generate', 'upload', 'fields', 'checkboxes'], function(i,s){
+                    dom['$' + s] = $('#' + s);
                 });
-                dom.$upload.attr("disabled", true);
-                for(var rank=2; rank<=12; rank++) {
+                dom.$upload.attr('disabled', true);
+                for(var rank = 2; rank <= 12; rank++) {
                     dom.$rank.append(
-                        $("<option/>").val(rank).text(rank in RANKS ? (rank + " - " + RANKS[rank]) : rank))
+                        $('<option/>').val(rank).text(rank in RANKS ? (rank + ' - ' + RANKS[rank]) : rank))
                 }
                 
-                dom.$generate.on("click", function() {
-                    $.getJSON("generate", {rank: dom.$rank.val(), type: dom.$type.val()}, function(character) {
+                dom.$generate.on('click', function() {
+                    $.getJSON('generate', {rank: dom.$rank.val(), type: dom.$type.val()}, function(character) {
                         if (character.error) {
                             alert(character.error);
                         } else {
                             dom.$fields.empty();
                             dom.$checkboxes.empty();
-                            dom.$upload.attr("disabled", false);
+                            dom.$upload.attr('disabled', false);
                             
                             var tags = [];
                             if (character.lineage) {
-                                tags.push(character.lineage + " lineage");
+                                tags.push(character.lineage + ' lineage');
                             }
                             if (dom.$rank.val() in RANKS) {
                                 tags.push(RANKS[dom.$rank.val()]);
@@ -53,7 +53,7 @@
                             
                             var fields = [
                                 $('<input type="text" id="name" />').val(character.name),
-                                $('<input type="text" id="tags" />').val(tags.join(", ")),
+                                $('<input type="text" id="tags" />').val(tags.join(', ')),
                                 $('<textarea rows="10" id="public" />').text(character.public),
                                 $('<textarea rows="10" id="private" />').text(character.private)
                             ];
@@ -107,13 +107,20 @@
         </script>
     </head>
     <body>
-        Rank:
-        <select id="rank"></select>
-        <select id="type">
-            <option>Ryusei</option>
-            <option>Natsune</option>
-            <option>Peasant</option>
+        <select id="clan">
+            <option value="">Clan</option>
+            ((% for clan in clans %))
+                <option value="$(( clan ))$">$(( clan|title ))$</option>
+            ((% endfor %))
         </select>
+        <select id="family">
+            <option value="">Family</option>
+        </select>
+        ((% if houses %))
+            <select id="house">
+                <option value="">House</option>
+            </select>
+        ((% endif %))
         <button id="generate">Generate</button>
         <button id="upload">Upload</button>
         <table width="100%">

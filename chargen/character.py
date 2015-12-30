@@ -41,10 +41,16 @@ class Character(object):
 
         self.gender = gender or choice(['male', 'female'])
         self.personal_name = unused_name(self.gender)
+        self.full_name = ' '.join([
+            self.family or '',
+            'no {}'.format(self.house) if self.house else '',
+            self.personal_name
+        ])
 
         self.xp = self.gen_xp()
-        self.gen_honor()
-        self.gen_traits()
+        self.honor = self.gen_honor()
+        self.traits = self.gen_traits()
+        self.pedigree = self.gen_pedigree()
         self.id = str(randrange(1e9))
 
     def gen_xp(self):
@@ -60,33 +66,32 @@ class Character(object):
             base += 50
         return base + 5 * randrange(10)
 
-    def gen_honor(self, base=2.5):
+    def gen_honor(self, base=3.0):
         if random() < 0.50 + self.rank * 0.03:
-            self.honor = rounded(base + abs(normalvariate(0, 1)), maxval=6)
+            return rounded(base + abs(normalvariate(0, 1)), maxval=6)
         else:
-            self.honor = rounded(base - abs(normalvariate(0, 0.5)), minval=1)
+            return rounded(base - abs(normalvariate(0, 0.5)), minval=1)
 
     def gen_traits(self):
-        self.traits = []
+        traits = []
         for trait, chance in dict(c.TRAITS, **c.GENDER_TRAITS[self.gender]).items():
             if '/' in trait:
                 for t, c in zip(trait.split('/'), chance):
                     if random() < c:
-                        self.traits.append(t.strip())
+                        traits.append(t.strip())
                         break
             else:
                 if random() < chance:
-                    self.traits.append(trait)
-        self.traits.sort()
+                    traits.append(trait)
+        return sorted(traits)
 
-    def to_dict(self):
-        data = deepcopy(self.__dict__)
-        data['public'] = self.render('public_info.txt', data)
-        data['private'] = self.render('private_info.txt', data)
-        return data
-
-    def __repr__(self):
-        return repr(self.to_dict())
+    def gen_pedigree(self):
+        return filter(None, [
+            self.clan and (self.clan + ' Clan'),
+            self.family and (self.family + ' Family'),
+            self.house and (self.house + ' House'),
+            self.lineage and (self.lineage + ' Lineage')
+        ])
 
     def render(self, fname, data):
         stats = deepcopy(data) or self.to_dict()
@@ -97,3 +102,11 @@ class Character(object):
         with open(join(config['template_dir'], fname)) as f:
             return f.read().format(**stats).strip()
 
+    def to_dict(self):
+        data = deepcopy(self.__dict__)
+        data['public'] = self.render('public_info.txt', data)
+        data['private'] = self.render('private_info.txt', data)
+        return data
+
+    def __repr__(self):
+        return repr(self.to_dict())

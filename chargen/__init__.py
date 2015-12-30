@@ -6,11 +6,11 @@ from functools import wraps
 
 import cherrypy
 
-from sideboard import parse_config, ajax, DaemonTask
+from sideboard.lib import parse_config, ajax, render_with_templates, DaemonTask
 
 config = parse_config(__file__)
 
-from chargen import __version__
+from chargen._version import __version__
 from chargen import op, character
 from chargen import constants as c
 
@@ -18,7 +18,7 @@ from chargen import constants as c
 @render_with_templates(config['template_dir'])
 class Root:
     def index(self):
-        return {}
+        return config
 
     def tags(self):
         return {}

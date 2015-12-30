@@ -21,7 +21,7 @@ CHARACTER_DEFAULTS = {
     'game_master_info': '',
     'is_game_master_only': False,
     'is_player_character': False,
-    'author_id': AUTHOR_ID
+    'author_id': config['author_id']
 }
 
 TRAITS = {
