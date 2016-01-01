@@ -3,6 +3,7 @@ from os.path import join
 from copy import deepcopy
 from random import random, randrange, normalvariate, choice
 
+from chargen import config
 from chargen import constants as c
 
 
@@ -18,13 +19,13 @@ def unused_name(gender=None):
 
 
 def weighted_choice(d):
-    assert sum(d.values()) <= 100
-    roll = randrange(100)
-    total = 0
-    for choice, percent in d.items():
-        total += percent
-        if roll < total:
-            return choice
+    if d:
+        roll = randrange(sum(d.values()))
+        total = 0
+        for choice, percent in d.items():
+            total += percent
+            if roll < total:
+                return choice
 
 
 class Character(object):
@@ -34,9 +35,9 @@ class Character(object):
         self.recognition = rounded(normalvariate(self.rank, 1))
 
         self.clan = clan or weighted_choice(config['clans'])
-        self.family = clan or weighted_choice(config['clan'].get(self.clan))
-        self.house = house or weighted_choice(config['family'].get(self.family))
-        self.lineage = lineage or weighted_choice(config['house'].get(self.house))
+        self.family = clan or weighted_choice(config['clan'].get(self.clan, {}))
+        self.house = house or weighted_choice(config['family'].get(self.family, {}))
+        self.lineage = lineage or weighted_choice(config['house'].get(self.house, {}))
         self.school = school or weighted_choice(config['clan'].get(self.clan, {}).get('schools', config['schools']['default']))
 
         self.gender = gender or choice(['male', 'female'])
@@ -50,13 +51,10 @@ class Character(object):
         self.xp = self.gen_xp()
         self.honor = self.gen_honor()
         self.traits = self.gen_traits()
-        self.pedigree = self.gen_pedigree()
+        self.extra = self.gen_pedigree()
         self.id = str(randrange(1e9))
 
     def gen_xp(self):
-        if self.xp:
-            return self.xp
-
         base = 0
         for rank, rank_base in config['rank_xp_bases'].items():
             if self.rank >= int(rank):
@@ -76,9 +74,9 @@ class Character(object):
         traits = []
         for trait, chance in dict(c.TRAITS, **c.GENDER_TRAITS[self.gender]).items():
             if '/' in trait:
-                for t, c in zip(trait.split('/'), chance):
-                    if random() < c:
-                        traits.append(t.strip())
+                for subtrait, subchance in zip(trait.split('/'), chance):
+                    if random() < subchance:
+                        traits.append(subtrait.strip())
                         break
             else:
                 if random() < chance:

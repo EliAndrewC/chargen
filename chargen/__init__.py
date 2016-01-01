@@ -18,7 +18,9 @@ from chargen import constants as c
 @render_with_templates(config['template_dir'])
 class Root:
     def index(self):
-        return config
+        conf = config.dict().copy()
+        conf.pop('oauth')
+        return {'config': conf}
 
     def tags(self):
         return {}
