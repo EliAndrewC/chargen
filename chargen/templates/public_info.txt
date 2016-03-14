@@ -1,4 +1,6 @@
-{gender} {school}
-{extra}
-Rank: {rank}
-Recognition: {recognition}
+{character.gender} {character.school_display}
+
+{character.tags_string}
+
+Rank: {character.rank}
+Recognition: {character.recognition}

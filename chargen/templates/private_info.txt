@@ -1,4 +1,4 @@
-XP: {xp}
-Honor: {honor}
+XP: {character.xp}
+Honor: {character.honor}
 
-{traits}
+{character.traits_string}

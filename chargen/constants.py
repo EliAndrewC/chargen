@@ -9,7 +9,10 @@ __all__ = ['NAMES', 'USED_NAMES', 'CHARACTER_DEFAULTS', 'XP_DIST', 'TRAITS', 'GE
 with open(os.path.join(config['root'], 'names.json')) as f:
     NAMES = json.load(f)
 
-USED_NAMES = []
+USED_NAMES = set()
+HOUSE_NAMES = set()
+for _family in config['family'].values():
+    HOUSE_NAMES.update(name.title() for name in _family.keys())
 
 XP_DIST = [.80, .65, .50, .35, .20, .18, .16, .14, .12, .10]
 
