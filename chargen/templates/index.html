@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Character Generator</title>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.6.1/lodash.js"></script>
+        <script>
+            var types = {{ types|tojson }},
+                config = {{ config|tojson }};
+
+            String.prototype.title = function () {
+                return this.substring(0, 1).toUpperCase() + this.substring(1);
+            };
+
+            var dropdownPopulator = function (src, dest) {
+                var $src = dom['$' + src],
+                    $dest = dom['$' + dest];
+                $src.on('change', function () {
+                    $dest.empty();
+                    $dest.append('<option value="">' + dest.title() + '</option>');
+                    _.each(_.get(config[src], $src.val()), function (ignored, val) {
+                        $dest.append(
+                            $('<option></option>').attr('value', val).text(val.title()));
+                    });
+                });
+            };
+
+            var dom = {};
+            $(function () {
+                $.each(['base_rank', 'type', 'generate', 'upload', 'fields', 'clan', 'family', 'house', 'lineage'], function (i, s) {
+                    dom['$' + s] = $('#' + s);
+                });
+                dom.$upload.prop('disabled', true);
+                dom.$generate.prop('disabled', true);
+
+                $.each(types, function (i, type) {
+                    dom.$type.append(
+                        $('<option></option>')
+                            .text(type)
+                            .attr('value', type));
+                });
+
+                dom.$type.on('change', function () {
+                    dom.$generate.prop('disabled', dom.$type.val() !== 'Peasant');
+                    var ranks = config.ranks[dom.$type.val()];
+                    dom.$base_rank.empty();
+                    if (_(ranks).size() > 1) {
+                        dom.$base_rank.append('<option value="">Rank</option>');
+                    }
+                    _(ranks).toPairs().sortBy(function (pair) {
+                        return parseInt(pair[0]);
+                    }).each(function (pair) {
+                        dom.$base_rank.append(
+                            $('<option></option>')
+                                .text(pair[1])
+                                .attr('value', pair[0]));
+                    });
+                });
+                dom.$base_rank.on('change', function () {
+                    dom.$generate.prop('disabled', dom.$type.val() !== 'Peasant' && !dom.$base_rank.val());
+                });
+                dom.$type.val(config.default_character_type).change();
+
+                dropdownPopulator('clan', 'family');
+                dropdownPopulator('family', 'house');
+                dropdownPopulator('house', 'lineage');
+
+                dom.$generate.on('click', function () {
+                    var params = {};
+                    _(['base_rank', 'type', 'clan', 'family', 'house', 'lineage']).each(function (field) {
+                        params[field] = dom['$' + field].val();
+                    });
+                    $.getJSON('generate', _.pickBy(params), function (character) {
+                        if (character.error) {
+                            alert(character.error);
+                        } else {
+                            dom.$fields.empty();
+                            dom.$upload.prop('disabled', false);
+
+                            var fields = [
+                                $('<input type="text" id="name" />').val(character.full_name),
+                                $('<input type="text" id="summary" />'),
+                                $('<input type="text" id="tags" />').val(character.tags.join(', ')),
+                                $('<textarea rows="12" id="public" />').text(character.public),
+                                $('<textarea rows="12" id="private" />').text(character.private)
+                            ];
+                            $.each(fields, function(i, $field) {
+                                dom.$fields.append(
+                                    $field.css("width", "100%")
+                                ).append("<br/>");
+                            });
+                            $('#summary').focus();
+                        }
+                    });
+                });
+
+                dom.$upload.on('click', function() {
+                    var params = {};
+                    $.each(['name', 'summary', 'tags', 'public', 'private'], function(i, param) {
+                        params[param] = $('#' + param).val();
+                    });
+                    $.getJSON('upload', params, function(resp) {
+                        if (resp.error) {
+                            alert(resp.error);
+                        } else {
+                            dom.$upload.attr('disabled', true);
+                            dom.$fields.empty().append(
+                                $('<b/>').text(params.name + ' has been uploaded')
+                            ).append("<br/>").append(
+                                $('<a target="_blank" />').attr('href', resp.view_url).text('View')
+                            ).append('&nbsp;&nbsp;&nbsp;&nbsp;').append(
+                                $('<a target="_blank" />').attr('href', resp.edit_url).text('Edit')
+                            );
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <select id="type"></select>
+        <select id="base_rank">
+            <option value="">Rank</option>
+        </select>
+        <select id="clan">
+            <option value="">Clan</option>
+            {% for clan in config.clans %}
+                <option value="{{ clan }}">{{ clan|title }}</option>
+            {% endfor %}
+        </select>
+        <select id="family">
+            <option value="">Family</option>
+        </select>
+        <select id="house">
+            <option value="">House</option>
+        </select>
+        <select id="lineage">
+            <option value="">Lineage</option>
+        </select>
+        <button id="generate">Generate</button>
+        <button id="upload">Upload</button>
+        <div id="fields" style="margin-right:40%"></div>
+    </body>
+</html>

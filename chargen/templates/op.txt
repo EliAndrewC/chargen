@@ -1,0 +1,120 @@
+Request URL: https://karmicinquisitors.obsidianportal.com/characters
+Request Method: POST
+
+headers:
+:authority: karmicinquisitors.obsidianportal.com
+:method: POST
+:path: /characters
+:scheme: https
+accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+accept-encoding: gzip, deflate, br
+accept-language: en-US,en;q=0.9
+cache-control: max-age=0
+content-length: 683
+content-type: application/x-www-form-urlencoded
+cookie: ahoy_visitor=2b4754f8-46d8-4d4b-8558-882e4b567a46; _ga=GA1.2.1523626322.1674610713; auth_token=f91f12204d47e861ea6d679f708b769158842b9a; lussumocookieone=62491; lussumocookietwo=b5406972f1a32c521881d9f83359d6680bc28516; ahoy_track=true; ahoy_visit=e2ca9f98-50b9-42d6-b13c-244ee8a99033; _obsidianportal_session_wildcard=BAh7CkkiD3Nlc3Npb25faWQGOgZFVEkiJWFmMjgzMDc0ODY5OGViZDcxNTg4MDM5NzJmMWExOWE2BjsAVEkiCXVzZXIGOwBGaQJE9UkiEF9jc3JmX3Rva2VuBjsARkkiMXBFalJFWTlTNERLRGw5aTU4ZmM0bjZ4azVHWUk0ODhab3hicHBwbjYvZE09BjsARkkiF2Fob3lfdmlzaXRvcl90b2tlbgY7AEZJIikyYjQ3NTRmOC00NmQ4LTRkNGItODU1OC04ODJlNGI1NjdhNDYGOwBUSSIVY3J5cHRlZF9wYXNzd29yZAY7AEZJIi0xMWE0NmQ3Njk5M2Y5NzUyM2Q1YjdhODE0OWUyMjJkOGQ3YzE0ZmQ1BjsAVA%3D%3D--bd8b516f21897d27eb9cf9fd934f17756f9c7ce2; _gid=GA1.2.1646660855.1679749311; AWSALB=feKkHC3JCI1AKceI2PYDgwsbd07ihmuTU0Tc6LfN5AKknNFzejgd2Liismct/mmsHh/TSK7ERGt9wq80rtyklD8fVIDVahKJ7eIplfSlyIGFNHYl6Lzh8FZwnDrE; AWSALBCORS=feKkHC3JCI1AKceI2PYDgwsbd07ihmuTU0Tc6LfN5AKknNFzejgd2Liismct/mmsHh/TSK7ERGt9wq80rtyklD8fVIDVahKJ7eIplfSlyIGFNHYl6Lzh8FZwnDrE
+origin: https://karmicinquisitors.obsidianportal.com
+referer: https://karmicinquisitors.obsidianportal.com/characters/new
+sec-ch-ua: "Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+sec-fetch-dest: document
+sec-fetch-mode: navigate
+sec-fetch-site: same-origin
+sec-fetch-user: ?1
+upgrade-insecure-requests: 1
+user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36
+
+POST payload:
+utf8=%E2%9C%93&authenticity_token=pEjREY9S4DKDl9i58fc4n6xk5GYI488Zoxbpppn6%2FdM%3D&game_character%5Bname%5D=Akodo+no+Damasu+Kojima&game_character%5Bslug%5D=&game_character%5Bis_pc%5D=0&game_character%5Btagline%5D=deceased+daimyo+of+the+Damasu+house%2C+killed+in+1117&game_character%5Bhide_stats%5D=0&game_character%5Btag_list%5D=daimyo&tag-dummy-input-clone=&as_values_01=daimyo%2C&game_character%5Bdescription%5D=killed+during+the+original+invasion+of+Toshi+Ranbo+by+Tsume+Retsu+in+1117&game_character%5Bbio%5D=&game_character%5Bwish_list%5D=&game_character%5Bgm_info%5D=Probably+not+going+to+be+mentioned+that+much.&game_character%5Bgm_only%5D=0&commit=Create&new_avatar_upload_id=
+
+utf8: 
+✓
+authenticity_token: 
+pEjREY9S4DKDl9i58fc4n6xk5GYI488Zoxbpppn6/dM=
+pEjREY9S4DKDl9i58fc4n6xk5GYI488Zoxbpppn6/dM=
+game_character[name]: 
+Akodo no Damasu Kojima
+game_character[slug]: 
+game_character[is_pc]: 
+0
+game_character[tagline]: 
+deceased daimyo of the Damasu house, killed in 1117
+game_character[hide_stats]: 
+0
+game_character[tag_list]: 
+daimyo
+tag-dummy-input-clone: 
+as_values_01: 
+daimyo,
+game_character[description]: 
+killed during the original invasion of Toshi Ranbo by Tsume Retsu in 1117
+game_character[bio]: 
+game_character[wish_list]: 
+game_character[gm_info]: 
+Probably not going to be mentioned that much.
+game_character[gm_only]: 
+0
+commit: 
+Create
+new_avatar_upload_id: 
+
+
+
+
+
+
+:authority: karmicinquisitors.obsidianportal.com
+:method: POST
+:path: /characters
+:scheme: https
+accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+accept-encoding: gzip, deflate, br
+accept-language: en-US,en;q=0.9
+cache-control: max-age=0
+content-length: 643
+content-type: application/x-www-form-urlencoded
+cookie: ahoy_visitor=2b4754f8-46d8-4d4b-8558-882e4b567a46; _ga=GA1.2.1523626322.1674610713; auth_token=f91f12204d47e861ea6d679f708b769158842b9a; lussumocookieone=62491; lussumocookietwo=b5406972f1a32c521881d9f83359d6680bc28516; ahoy_track=true; ahoy_visit=bbc62fb1-1f5e-46ae-a942-5766132ec8f0; _gid=GA1.2.838815084.1681256309; _obsidianportal_session_wildcard=BAh7CkkiD3Nlc3Npb25faWQGOgZFVEkiJWFmMjgzMDc0ODY5OGViZDcxNTg4MDM5NzJmMWExOWE2BjsAVEkiCXVzZXIGOwBGaQJE9UkiEF9jc3JmX3Rva2VuBjsARkkiMXBFalJFWTlTNERLRGw5aTU4ZmM0bjZ4azVHWUk0ODhab3hicHBwbjYvZE09BjsARkkiF2Fob3lfdmlzaXRvcl90b2tlbgY7AEZJIikyYjQ3NTRmOC00NmQ4LTRkNGItODU1OC04ODJlNGI1NjdhNDYGOwBUSSIVY3J5cHRlZF9wYXNzd29yZAY7AEZJIi0xMWE0NmQ3Njk5M2Y5NzUyM2Q1YjdhODE0OWUyMjJkOGQ3YzE0ZmQ1BjsAVA%3D%3D--bd8b516f21897d27eb9cf9fd934f17756f9c7ce2; AWSALB=pOivYU2RHykJGguqgrnGLHgjNIh6Wd/7FM2gOrRRmSdMPZ3iX7ErNSF8+LuGhm/O/z12oE8IhGXUch+nI33athjq/AAt2oF+A8yROpa58KpgElr2ejDaZFRaibk8; AWSALBCORS=pOivYU2RHykJGguqgrnGLHgjNIh6Wd/7FM2gOrRRmSdMPZ3iX7ErNSF8+LuGhm/O/z12oE8IhGXUch+nI33athjq/AAt2oF+A8yROpa58KpgElr2ejDaZFRaibk8
+origin: https://karmicinquisitors.obsidianportal.com
+referer: https://karmicinquisitors.obsidianportal.com/characters/new
+sec-ch-ua: "Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+sec-fetch-dest: document
+sec-fetch-mode: navigate
+sec-fetch-site: same-origin
+sec-fetch-user: ?1
+upgrade-insecure-requests: 1
+user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36
+
+
+
+utf8: 
+✓
+authenticity_token: 
+pEjREY9S4DKDl9i58fc4n6xk5GYI488Zoxbpppn6/dM=
+game_character[name]: 
+Doji no Tsume Retsu
+game_character[slug]: 
+game_character[is_pc]: 
+0
+game_character[tagline]: 
+deceased daimyo of the Tsume house, killed in 1119
+game_character[hide_stats]: 
+0
+game_character[tag_list]: 
+daimyo,deceased
+tag-dummy-input-clone: 
+as_values_033: 
+daimyo,deceased,
+game_character[description]: 
+game_character[bio]: 
+game_character[wish_list]: 
+game_character[gm_info]: 
+probably will be mentioned more than Akodo no Damasu Kojima
+game_character[gm_only]: 
+0
+commit: 
+Create
+new_avatar_upload_id: 
+
