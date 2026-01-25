@@ -1,0 +1,4 @@
+cherrypy
+configobj
+jinja2
+requests
