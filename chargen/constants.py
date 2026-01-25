@@ -113,3 +113,18 @@ GENDER_TRAITS = {
 Some traits are gender-specific, e.g. 'mustachioed' or 'pregnant'.  This uses
 the same format as TRAITS above, indexed by gender.
 """
+
+CLAN_COLORS = {
+    'Crab': 'dark blue and light gray',
+    'Crane': 'light blue and white / silver',
+    'Dragon': 'gold and dark green',
+    'Lion': 'yellow and brown',
+    'Phoenix': 'red and orange',
+    'Scorpion': 'dark red and black',
+    'Unicorn': 'purple and white with gold trim',
+    'Mantis': 'sea green and gold',
+}
+"""
+This is not yet used, but art.py will eventually make use of this when making
+art prompts for NPCs.
+"""
