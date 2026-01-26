@@ -2,7 +2,7 @@ import os
 
 from chargen import config, __here__ as HERE
 
-__all__ = ['HERE', 'NAMES', 'USED_NAMES', 'XP_DIST', 'TRAITS', 'GENDER_TRAITS']
+__all__ = ['HERE', 'NAMES', 'USED_NAMES', 'XP_DIST', 'TRAITS', 'GENDER_TRAITS', 'MINISTRIES']
 
 
 NAMES = {}
@@ -122,9 +122,28 @@ CLAN_COLORS = {
     'Phoenix': 'red and orange',
     'Scorpion': 'black and dark red',
     'Unicorn': 'purple and white with gold trim',
-    'Mantis': 'sea green and gold',
+    'Sparrow': 'dun brown and black',
+    'Fox': 'green and silver',
+    'Wasp': 'black and gold',
+    'Dragonfly': 'blue, brown, and gold',
+    'Hare': 'red and white',
 }
 """
 This is not yet used, but art.py will eventually make use of this when making
 art prompts for NPCs.
+"""
+
+MINISTRIES = [
+    'Ministry of Rites',
+    'Ministry of Retainers',
+    'Ministry of Revenue',
+    'Ministry of War',
+    'Ministry of Works',
+    'Ministry of Justice'
+]
+"""
+The six ministries of the Rokugan imperial bureaucracy. Each ministry has
+specific responsibilities and is led by a Minister and Deputy Minister at
+the imperial level, with Provincial and Deputy Provincial Ministers in
+the provinces.
 """
