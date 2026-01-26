@@ -4,6 +4,8 @@
         <title>Ministry Generator</title>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.6.1/lodash.js"></script>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -93,6 +95,31 @@
                 max-height: 300px;
                 border: 1px solid #ccc;
                 margin-top: 10px;
+            }
+            .art-images {
+                display: flex;
+                gap: 15px;
+                align-items: flex-start;
+                margin-top: 10px;
+            }
+            .cropper-container-wrapper {
+                max-width: 250px;
+            }
+            .cropper-container-wrapper img {
+                max-width: 100%;
+                display: block;
+            }
+            .headshot-preview {
+                width: 100px;
+                height: 100px;
+                border: 1px solid #ccc;
+                object-fit: cover;
+                background: #f0f0f0;
+            }
+            .headshot-label {
+                font-size: 11px;
+                color: #666;
+                margin-bottom: 3px;
             }
             .art-loading {
                 display: none;
@@ -194,6 +221,7 @@
 
             var dom = {};
             var characters = [];
+            var croppers = {};  // Track Cropper.js instances by character index
 
             $(function () {
                 // Initialize DOM references
@@ -371,10 +399,30 @@
                         .text('Generating...');
                     $artSection.append($artLoading);
 
-                    var $artImage = $('<img class="art-preview" style="display: none;">')
+                    // Container for full image and headshot preview side by side
+                    var $artImages = $('<div class="art-images" style="display: none;"></div>')
+                        .attr('id', 'art-images-' + idx);
+
+                    // Full image with cropper
+                    var $fullImageDiv = $('<div></div>');
+                    $fullImageDiv.append($('<div class="headshot-label">Full Image (drag box to adjust headshot):</div>'));
+                    var $cropperWrapper = $('<div class="cropper-container-wrapper"></div>')
+                        .attr('id', 'cropper-wrapper-' + idx);
+                    var $artImage = $('<img>')
                         .attr('id', 'art-image-' + idx);
-                    $artSection.append($('<br>'));
-                    $artSection.append($artImage);
+                    $cropperWrapper.append($artImage);
+                    $fullImageDiv.append($cropperWrapper);
+                    $artImages.append($fullImageDiv);
+
+                    // Headshot preview
+                    var $headshotDiv = $('<div></div>');
+                    $headshotDiv.append($('<div class="headshot-label">Avatar Preview:</div>'));
+                    var $headshotPreview = $('<img class="headshot-preview">')
+                        .attr('id', 'headshot-preview-' + idx);
+                    $headshotDiv.append($headshotPreview);
+                    $artImages.append($headshotDiv);
+
+                    $artSection.append($artImages);
 
                     $card.append($artSection);
 
@@ -409,7 +457,13 @@
                     var prompt = $('#prompt-' + idx).val();
                     $('#generate-art-' + idx).prop('disabled', true);
                     $('#art-loading-' + idx).addClass('active');
-                    $('#art-image-' + idx).hide();
+                    $('#art-images-' + idx).hide();
+
+                    // Destroy existing cropper if any
+                    if (croppers[idx]) {
+                        croppers[idx].destroy();
+                        delete croppers[idx];
+                    }
 
                     $.getJSON('generate_art', {prompt: prompt}, function(resp) {
                         $('#art-loading-' + idx).removeClass('active');
@@ -420,12 +474,74 @@
                             if (callback) callback();
                         } else {
                             characters[idx].image_data = resp.image;
-                            $('#art-image-' + idx)
-                                .attr('src', 'data:image/png;base64,' + resp.image)
-                                .show();
-                            if (callback) callback();
+                            characters[idx].headshot_crop = resp.headshot_crop;
+
+                            var $img = $('#art-image-' + idx);
+                            $img.attr('src', 'data:image/png;base64,' + resp.image);
+                            $('#art-images-' + idx).show();
+
+                            // Initialize cropper after image loads
+                            $img.one('load', function() {
+                                var img = this;
+                                var crop = resp.headshot_crop;
+
+                                croppers[idx] = new Cropper(img, {
+                                    viewMode: 1,
+                                    dragMode: 'move',
+                                    autoCropArea: 1,
+                                    restore: false,
+                                    guides: true,
+                                    center: true,
+                                    highlight: true,
+                                    cropBoxMovable: true,
+                                    cropBoxResizable: true,
+                                    toggleDragModeOnDblclick: false,
+                                    ready: function() {
+                                        if (crop) {
+                                            this.cropper.setData({
+                                                x: crop.x,
+                                                y: crop.y,
+                                                width: crop.width,
+                                                height: crop.height
+                                            });
+                                        }
+                                        updateHeadshotPreview(idx);
+                                    },
+                                    crop: function() {
+                                        updateHeadshotPreview(idx);
+                                    }
+                                });
+
+                                if (callback) callback();
+                            });
                         }
                     });
+                }
+
+                // Update headshot preview for a character
+                function updateHeadshotPreview(idx) {
+                    if (!croppers[idx]) return;
+                    try {
+                        var canvas = croppers[idx].getCroppedCanvas({
+                            width: 100,
+                            height: 100,
+                            imageSmoothingEnabled: true,
+                            imageSmoothingQuality: 'high'
+                        });
+                        if (canvas) {
+                            $('#headshot-preview-' + idx).attr('src', canvas.toDataURL());
+                            // Update stored crop data
+                            var cropData = croppers[idx].getData(true);
+                            characters[idx].headshot_crop = {
+                                x: cropData.x,
+                                y: cropData.y,
+                                width: cropData.width,
+                                height: cropData.height
+                            };
+                        }
+                    } catch (e) {
+                        // Ignore errors during cropper initialization
+                    }
                 }
 
                 // Auto-generate prompts and art for all characters
@@ -492,13 +608,28 @@
                     // Prepare character data for upload
                     var uploadData = [];
                     $.each(characters, function(idx, char) {
+                        // Get current crop data from cropper if active
+                        var headshot_crop = null;
+                        if (croppers[idx]) {
+                            var cropData = croppers[idx].getData(true);
+                            headshot_crop = {
+                                x: cropData.x,
+                                y: cropData.y,
+                                width: cropData.width,
+                                height: cropData.height
+                            };
+                        } else if (char.headshot_crop) {
+                            headshot_crop = char.headshot_crop;
+                        }
+
                         uploadData.push({
                             name: $('#name-' + idx).val(),
                             summary: $('#summary-' + idx).val(),
                             tags: $('#tags-' + idx).val().split(',').map(function(t) { return t.trim(); }).filter(Boolean),
                             public: $('#public-' + idx).val(),
                             private: $('#private-' + idx).val(),
-                            image_data: char.image_data || ''
+                            image_data: char.image_data || '',
+                            headshot_crop: headshot_crop
                         });
                     });
 

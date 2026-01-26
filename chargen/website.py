@@ -199,17 +199,30 @@ class Root:
 
                 image_embed = ''
                 avatar_upload_id = ''
+                headshot_crop = char_data.get('headshot_crop', None)
                 if image_data:
                     try:
                         image_bytes = base64.b64decode(image_data)
                         safe_name = re.sub(r'[^a-zA-Z0-9]', '', name.replace(' ', ''))
                         filename = f'{safe_name}.png'
 
-                        # Upload as avatar (for character thumbnail)
-                        avatar_info = op.upload_avatar(image_bytes, filename)
+                        # Create headshot crop for avatar if crop coordinates provided
+                        if headshot_crop:
+                            headshot_bytes = art.crop_headshot(
+                                image_bytes,
+                                int(headshot_crop['x']),
+                                int(headshot_crop['y']),
+                                int(headshot_crop['width']),
+                                int(headshot_crop['height'])
+                            )
+                        else:
+                            headshot_bytes = image_bytes
+
+                        # Upload headshot as avatar (for character thumbnail)
+                        avatar_info = op.upload_avatar(headshot_bytes, filename)
                         avatar_upload_id = str(avatar_info.get('id', ''))
 
-                        # Upload as file (for bio embed)
+                        # Upload full image as file (for bio embed)
                         file_info = op.upload_image(image_bytes, filename)
                         file_id = file_info.get('id')
                         if file_id:
