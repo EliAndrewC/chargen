@@ -5,6 +5,8 @@ This module generates character portrait prompts based on NPC attributes and
 uses Gemini 2.5 Flash Image to create the artwork.
 """
 import base64
+import subprocess
+import sys
 
 from google import genai
 from google.genai import types
@@ -23,6 +25,46 @@ def _get_client():
             'https://aistudio.google.com/app/apikey'
         )
     return genai.Client(api_key=api_key)
+
+
+def trim_whitespace(image_data: bytes) -> bytes:
+    """
+    Trim whitespace from around an image using ImageMagick.
+
+    Uses a 10% fuzz factor to handle near-white backgrounds from AI image
+    generators, then adds back 10px of padding for a clean border.
+
+    Args:
+        image_data: The raw PNG image bytes
+
+    Returns:
+        bytes: The trimmed PNG image data with 10px padding
+    """
+    try:
+        result = subprocess.run(
+            [
+                'convert', 'png:-',
+                '-fuzz', '10%',
+                '-trim', '+repage',
+                '-bordercolor', '#FFFFFF',
+                '-border', '10',
+                'png:-'
+            ],
+            input=image_data,
+            capture_output=True
+        )
+
+        if result.returncode != 0:
+            print(f'Warning: Failed to trim image: {result.stderr.decode()}',
+                  file=sys.stderr)
+            return image_data
+
+        return result.stdout
+
+    except FileNotFoundError:
+        print('Warning: ImageMagick not installed, skipping whitespace trim',
+              file=sys.stderr)
+        return image_data
 
 
 def generate_prompt(character: dict) -> str:
@@ -157,7 +199,10 @@ def generate_image(prompt: str) -> bytes:
     img = response.generated_images[0].image
     buffer = BytesIO()
     img._pil_image.save(buffer, format='PNG')
-    return buffer.getvalue()
+    image_bytes = buffer.getvalue()
+
+    # Trim whitespace from around the generated image
+    return trim_whitespace(image_bytes)
 
 
 def generate_image_base64(prompt: str) -> str:
