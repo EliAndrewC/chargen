@@ -4,6 +4,8 @@
         <title>Character Generator</title>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.6.1/lodash.js"></script>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
         <script>
             var types = {{ types|tojson }},
                 config = {{ config|tojson }};
@@ -28,9 +30,10 @@
             var dom = {};
             var currentCharacter = null;
             var currentImageData = null;  // Store generated image base64 data
+            var cropper = null;  // Cropper.js instance for headshot selection
 
             $(function () {
-                $.each(['base_rank', 'type', 'generate', 'upload', 'fields', 'clan', 'family', 'house', 'lineage', 'art_section', 'art_prompt', 'generate_art', 'art_result', 'art_image', 'art_loading'], function (i, s) {
+                $.each(['base_rank', 'type', 'generate', 'upload', 'fields', 'clan', 'family', 'house', 'lineage', 'art_section', 'art_prompt', 'generate_art', 'art_result', 'art_image', 'art_loading', 'headshot_preview', 'cropper_container'], function (i, s) {
                     dom['$' + s] = $('#' + s);
                 });
                 dom.$upload.prop('disabled', true);
@@ -80,6 +83,11 @@
                         } else {
                             currentCharacter = character;
                             currentImageData = null;  // Reset image when generating new character
+                            // Destroy cropper if active
+                            if (cropper) {
+                                cropper.destroy();
+                                cropper = null;
+                            }
                             dom.$fields.empty();
                             dom.$upload.prop('disabled', false);
 
@@ -123,6 +131,12 @@
                     dom.$art_loading.show();
                     dom.$art_result.hide();
 
+                    // Destroy existing cropper if any
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+
                     $.getJSON('generate_art', {prompt: prompt}, function(resp) {
                         dom.$art_loading.hide();
                         dom.$generate_art.prop('disabled', false);
@@ -133,9 +147,66 @@
                             currentImageData = resp.image;  // Store the base64 image data
                             dom.$art_image.attr('src', 'data:image/png;base64,' + resp.image);
                             dom.$art_result.show();
+
+                            // Initialize cropper for headshot selection after image loads
+                            dom.$art_image.one('load', function() {
+                                var img = dom.$art_image[0];
+                                var crop = resp.headshot_crop;
+
+                                // Calculate the scale between natural and displayed size
+                                var displayWidth = img.width;
+                                var displayHeight = img.height;
+                                var naturalWidth = img.naturalWidth;
+                                var naturalHeight = img.naturalHeight;
+
+                                cropper = new Cropper(img, {
+                                    viewMode: 1,
+                                    dragMode: 'move',
+                                    autoCropArea: 1,
+                                    restore: false,
+                                    guides: true,
+                                    center: true,
+                                    highlight: true,
+                                    cropBoxMovable: true,
+                                    cropBoxResizable: true,
+                                    toggleDragModeOnDblclick: false,
+                                    ready: function() {
+                                        // Set initial crop box to the detected headshot region
+                                        if (crop) {
+                                            this.cropper.setData({
+                                                x: crop.x,
+                                                y: crop.y,
+                                                width: crop.width,
+                                                height: crop.height
+                                            });
+                                        }
+                                        updateHeadshotPreview();
+                                    },
+                                    crop: function() {
+                                        updateHeadshotPreview();
+                                    }
+                                });
+                            });
                         }
                     });
                 });
+
+                function updateHeadshotPreview() {
+                    if (!cropper) return;
+                    try {
+                        var canvas = cropper.getCroppedCanvas({
+                            width: 150,
+                            height: 150,
+                            imageSmoothingEnabled: true,
+                            imageSmoothingQuality: 'high'
+                        });
+                        if (canvas) {
+                            dom.$headshot_preview.attr('src', canvas.toDataURL());
+                        }
+                    } catch (e) {
+                        // Ignore errors during cropper initialization
+                    }
+                }
 
                 dom.$upload.on('click', function() {
                     var params = {};
@@ -145,6 +216,16 @@
                     // Include image data if an image was generated
                     if (currentImageData) {
                         params.image_data = currentImageData;
+                        // Include headshot crop coordinates if cropper is active
+                        if (cropper) {
+                            var cropData = cropper.getData(true);  // true = rounded integers
+                            params.headshot_crop = {
+                                x: cropData.x,
+                                y: cropData.y,
+                                width: cropData.width,
+                                height: cropData.height
+                            };
+                        }
                     }
                     // Use POST instead of GET to handle large image data
                     $.ajax({
@@ -157,6 +238,11 @@
                             if (resp.error) {
                                 alert(resp.error);
                             } else {
+                                // Destroy cropper before hiding
+                                if (cropper) {
+                                    cropper.destroy();
+                                    cropper = null;
+                                }
                                 dom.$upload.attr('disabled', true);
                                 dom.$art_section.hide();
                                 dom.$fields.empty().append(
@@ -208,9 +294,20 @@
             <button id="generate_art">Generate Art</button>
             <span id="art_loading" style="display: none; margin-left: 10px;">Generating image, please wait...</span>
             <div id="art_result" style="margin-top: 15px; display: none;">
-                <img id="art_image" style="max-width: 512px; max-height: 512px; border: 1px solid #ccc;" />
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                    <div>
+                        <p style="margin: 0 0 5px 0;"><strong>Full Image</strong> (for bio) - drag the box to select headshot:</p>
+                        <div id="cropper_container" style="max-width: 512px; max-height: 512px;">
+                            <img id="art_image" style="max-width: 100%; display: block;" />
+                        </div>
+                    </div>
+                    <div>
+                        <p style="margin: 0 0 5px 0;"><strong>Avatar Preview</strong> (headshot):</p>
+                        <img id="headshot_preview" style="width: 150px; height: 150px; border: 1px solid #ccc; object-fit: cover; background: #f0f0f0;" />
+                    </div>
+                </div>
                 <br/>
-                <small>If you don't like the result, edit the prompt above and click Generate Art again.</small>
+                <small>Adjust the crop box to select the headshot region for the avatar. If you don't like the image, edit the prompt above and click Generate Art again.</small>
             </div>
         </div>
     </body>

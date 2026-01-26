@@ -3,6 +3,7 @@ cherrypy
 configobj
 google-genai
 jinja2
+opencv-python-headless
 pillow
 requests
 requests-oauthlib
