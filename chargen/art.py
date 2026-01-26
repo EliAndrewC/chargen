@@ -217,3 +217,96 @@ def generate_image_base64(prompt: str) -> str:
     """
     image_bytes = generate_image(prompt)
     return base64.b64encode(image_bytes).decode('utf-8')
+
+
+def get_headshot_crop(image_data: bytes) -> tuple[int, int, int, int]:
+    """
+    Detect the face in an image and return suggested headshot crop coordinates.
+
+    Uses OpenCV's Haar cascade face detection to find the face, then expands
+    the region to include hair and shoulders for a nice portrait crop.
+
+    Args:
+        image_data: The raw PNG image bytes
+
+    Returns:
+        tuple: (x, y, width, height) of the suggested crop region
+    """
+    import cv2
+    import numpy as np
+
+    # Decode image from bytes
+    nparr = np.frombuffer(image_data, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    h, w = img.shape[:2]
+
+    # Load face detector
+    face_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+    )
+
+    # Convert to grayscale for detection
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces
+    faces = face_cascade.detectMultiScale(
+        gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50)
+    )
+
+    if len(faces) == 0:
+        # Fallback: crop top-center portion of image
+        crop_w = w // 2
+        crop_h = h // 2
+        crop_x = w // 4
+        crop_y = 0
+        return (int(crop_x), int(crop_y), int(crop_w), int(crop_h))
+
+    # Pick the topmost face (smallest y value) - heads are usually at the top
+    faces = sorted(faces, key=lambda f: f[1])
+    fx, fy, fw, fh = faces[0]
+
+    # Expand to create a nice headshot (space above head, include shoulders)
+    expand_top = int(fh * 0.6)
+    expand_bottom = int(fh * 0.8)
+    expand_sides = int(fw * 0.6)
+
+    crop_x = max(0, fx - expand_sides)
+    crop_y = max(0, fy - expand_top)
+    crop_x2 = min(w, fx + fw + expand_sides)
+    crop_y2 = min(h, fy + fh + expand_bottom)
+
+    # Convert numpy int32 to plain Python int for JSON serialization
+    return (int(crop_x), int(crop_y), int(crop_x2 - crop_x), int(crop_y2 - crop_y))
+
+
+def crop_headshot(image_data: bytes, x: int, y: int, width: int, height: int) -> bytes:
+    """
+    Crop an image to the specified region for use as a headshot/avatar.
+
+    Args:
+        image_data: The raw PNG image bytes
+        x: Left edge of crop region
+        y: Top edge of crop region
+        width: Width of crop region
+        height: Height of crop region
+
+    Returns:
+        bytes: The cropped PNG image data
+    """
+    import cv2
+    import numpy as np
+    from io import BytesIO
+
+    # Decode image from bytes
+    nparr = np.frombuffer(image_data, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    # Crop
+    cropped = img[y:y+height, x:x+width]
+
+    # Encode back to PNG
+    success, encoded = cv2.imencode('.png', cropped)
+    if not success:
+        raise ValueError('Failed to encode cropped image')
+
+    return encoded.tobytes()

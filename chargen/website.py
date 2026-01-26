@@ -69,6 +69,7 @@ class Root:
 
         # If we have image data, upload it for both avatar and bio
         avatar_upload_id = ''
+        headshot_crop = data.get('headshot_crop', None)
         if image_data:
             try:
                 # Decode base64 image data
@@ -78,11 +79,23 @@ class Root:
                 safe_name = re.sub(r'[^a-zA-Z0-9]', '', name.replace(' ', ''))
                 filename = f'{safe_name}.png'
 
-                # Upload as avatar (for character thumbnail)
-                avatar_info = op.upload_avatar(image_bytes, filename)
+                # Create headshot crop for avatar if crop coordinates provided
+                if headshot_crop:
+                    headshot_bytes = art.crop_headshot(
+                        image_bytes,
+                        int(headshot_crop['x']),
+                        int(headshot_crop['y']),
+                        int(headshot_crop['width']),
+                        int(headshot_crop['height'])
+                    )
+                else:
+                    headshot_bytes = image_bytes
+
+                # Upload headshot as avatar (for character thumbnail)
+                avatar_info = op.upload_avatar(headshot_bytes, filename)
                 avatar_upload_id = str(avatar_info.get('id', ''))
 
-                # Upload as file (for bio embed)
+                # Upload full image as file (for bio embed)
                 file_info = op.upload_image(image_bytes, filename)
                 file_id = file_info.get('id')
 
@@ -116,13 +129,25 @@ class Root:
     def generate_art(self, prompt: str):
         """
         Generate an image from the given prompt.
-        Returns base64-encoded image data.
+        Returns base64-encoded image data plus suggested headshot crop coordinates.
         """
         try:
             image_data = art.generate_image_base64(prompt)
-            return {'image': image_data, 'error': None}
+            # Get suggested headshot crop from the generated image
+            image_bytes = base64.b64decode(image_data)
+            crop_x, crop_y, crop_w, crop_h = art.get_headshot_crop(image_bytes)
+            return {
+                'image': image_data,
+                'headshot_crop': {
+                    'x': crop_x,
+                    'y': crop_y,
+                    'width': crop_w,
+                    'height': crop_h
+                },
+                'error': None
+            }
         except Exception as e:
-            return {'image': None, 'error': str(e)}
+            return {'image': None, 'headshot_crop': None, 'error': str(e)}
 
     @cherrypy.expose
     def ministry(self):
