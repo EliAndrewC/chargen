@@ -29,8 +29,6 @@ generate NPCs for the Rokugan setting.
 ## Project Status & Roadmap
 - [x] Basic character generation logic (Samurai, Monk, Peasant).
 - [x] Web frontend (CherryPy + Jinja2 + jQuery).
-- [ ] **OAuth 1.0 Implementation**: The skeleton exists in `op.py` but is non-functional. 
-  - Use the Obsidian Portal API docs as a reference.
-  - Secrets should be stored in `development-secrets.ini` via ConfigObj.
-- [ ] **Character Upload**: The `create_character` function in `op.py` needs to map the `Character` object to the OP API schema.
-- [ ] **Art Pipeline**: Currently no art generation. Future goal is to add a button to the UI that calls an image API and saves the result to the NPC's description.  I want to be able to approve the generated art prior to saving it to Obsidian Portal and have the option to tweak the prompt manually.
+- [X] Secrets should be stored in `development-secrets.ini` via ConfigObj.
+- [X] **Character Upload**: The `create_character` function in `op.py` needs to map the `Character` object to the OP API schema.
+- [ ] **Art Pipeline**: A button in the UI that calls an image API and saves the result to the NPC's description.  I want to be able to approve the generated art prior to saving it to Obsidian Portal and have the option to tweak the prompt manually.

@@ -120,7 +120,7 @@ CLAN_COLORS = {
     'Dragon': 'gold and dark green',
     'Lion': 'yellow and brown',
     'Phoenix': 'red and orange',
-    'Scorpion': 'dark red and black',
+    'Scorpion': 'black and dark red',
     'Unicorn': 'purple and white with gold trim',
     'Mantis': 'sea green and gold',
 }

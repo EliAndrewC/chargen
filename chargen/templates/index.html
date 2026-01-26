@@ -26,12 +26,16 @@
             };
 
             var dom = {};
+            var currentCharacter = null;
+            var currentImageData = null;  // Store generated image base64 data
+
             $(function () {
-                $.each(['base_rank', 'type', 'generate', 'upload', 'fields', 'clan', 'family', 'house', 'lineage'], function (i, s) {
+                $.each(['base_rank', 'type', 'generate', 'upload', 'fields', 'clan', 'family', 'house', 'lineage', 'art_section', 'art_prompt', 'generate_art', 'art_result', 'art_image', 'art_loading'], function (i, s) {
                     dom['$' + s] = $('#' + s);
                 });
                 dom.$upload.prop('disabled', true);
                 dom.$generate.prop('disabled', true);
+                dom.$generate_art.prop('disabled', true);
 
                 $.each(types, function (i, type) {
                     dom.$type.append(
@@ -74,6 +78,8 @@
                         if (character.error) {
                             alert(character.error);
                         } else {
+                            currentCharacter = character;
+                            currentImageData = null;  // Reset image when generating new character
                             dom.$fields.empty();
                             dom.$upload.prop('disabled', false);
 
@@ -90,6 +96,43 @@
                                 ).append("<br/>");
                             });
                             $('#summary').focus();
+
+                            // Reset art section and fetch suggested prompt
+                            dom.$art_section.show();
+                            dom.$art_result.hide();
+                            dom.$art_prompt.val('Loading prompt...');
+                            dom.$generate_art.prop('disabled', true);
+
+                            $.getJSON('art_prompt', {
+                                gender: character.gender,
+                                clan: character.clan || '',
+                                school: character.school || '',
+                                xp: character.xp || 150,
+                                traits: (character.traits || []).join(', ')
+                            }, function(resp) {
+                                dom.$art_prompt.val(resp.prompt);
+                                dom.$generate_art.prop('disabled', false);
+                            });
+                        }
+                    });
+                });
+
+                dom.$generate_art.on('click', function () {
+                    var prompt = dom.$art_prompt.val();
+                    dom.$generate_art.prop('disabled', true);
+                    dom.$art_loading.show();
+                    dom.$art_result.hide();
+
+                    $.getJSON('generate_art', {prompt: prompt}, function(resp) {
+                        dom.$art_loading.hide();
+                        dom.$generate_art.prop('disabled', false);
+
+                        if (resp.error) {
+                            alert('Art generation failed: ' + resp.error);
+                        } else {
+                            currentImageData = resp.image;  // Store the base64 image data
+                            dom.$art_image.attr('src', 'data:image/png;base64,' + resp.image);
+                            dom.$art_result.show();
                         }
                     });
                 });
@@ -99,18 +142,34 @@
                     $.each(['name', 'summary', 'tags', 'public', 'private'], function(i, param) {
                         params[param] = $('#' + param).val();
                     });
-                    $.getJSON('upload', params, function(resp) {
-                        if (resp.error) {
-                            alert(resp.error);
-                        } else {
-                            dom.$upload.attr('disabled', true);
-                            dom.$fields.empty().append(
-                                $('<b/>').text(params.name + ' has been uploaded')
-                            ).append("<br/>").append(
-                                $('<a target="_blank" />').attr('href', resp.view_url).text('View')
-                            ).append('&nbsp;&nbsp;&nbsp;&nbsp;').append(
-                                $('<a target="_blank" />').attr('href', resp.edit_url).text('Edit')
-                            );
+                    // Include image data if an image was generated
+                    if (currentImageData) {
+                        params.image_data = currentImageData;
+                    }
+                    // Use POST instead of GET to handle large image data
+                    $.ajax({
+                        url: 'upload',
+                        type: 'POST',
+                        data: JSON.stringify(params),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        success: function(resp) {
+                            if (resp.error) {
+                                alert(resp.error);
+                            } else {
+                                dom.$upload.attr('disabled', true);
+                                dom.$art_section.hide();
+                                dom.$fields.empty().append(
+                                    $('<b/>').text(params.name + ' has been uploaded')
+                                ).append("<br/>").append(
+                                    $('<a target="_blank" />').attr('href', resp.view_url).text('View')
+                                ).append('&nbsp;&nbsp;&nbsp;&nbsp;').append(
+                                    $('<a target="_blank" />').attr('href', resp.edit_url).text('Edit')
+                                );
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Upload failed: ' + error);
                         }
                     });
                 });
@@ -140,5 +199,19 @@
         <button id="generate">Generate</button>
         <button id="upload">Upload</button>
         <div id="fields" style="margin-right:40%"></div>
+
+        <div id="art_section" style="margin-top: 20px; display: none;">
+            <h3>Character Art</h3>
+            <p>Edit the prompt below if desired, then click Generate Art:</p>
+            <textarea id="art_prompt" rows="8" style="width: 100%; max-width: 600px;"></textarea>
+            <br/>
+            <button id="generate_art">Generate Art</button>
+            <span id="art_loading" style="display: none; margin-left: 10px;">Generating image, please wait...</span>
+            <div id="art_result" style="margin-top: 15px; display: none;">
+                <img id="art_image" style="max-width: 512px; max-height: 512px; border: 1px solid #ccc;" />
+                <br/>
+                <small>If you don't like the result, edit the prompt above and click Generate Art again.</small>
+            </div>
+        </div>
     </body>
 </html>
