@@ -1,4 +1,8 @@
+beautifulsoup4
 cherrypy
 configobj
+google-genai
 jinja2
+pillow
 requests
+requests-oauthlib

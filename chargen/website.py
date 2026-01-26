@@ -1,11 +1,14 @@
 import os
 import json
+import base64
+import re
+import traceback
 from functools import wraps
 
 import jinja2
 import cherrypy
 
-from chargen import config, op, constants as c
+from chargen import config, op, art, constants as c
 from chargen.character import Character
 
 jinja_loader = jinja2.FileSystemLoader(os.path.join(c.HERE, 'templates'))
@@ -42,14 +45,78 @@ class Root:
         return Character.types()[type](**params).to_dict()
 
     @ajax
-    def upload(self, name: str, summary: str, public: str, private: str, tags: list[str]):
+    def upload(self, **kwargs):
+        # Handle JSON POST data
+        if cherrypy.request.method == 'POST' and cherrypy.request.headers.get('Content-Type', '').startswith('application/json'):
+            body = cherrypy.request.body.read()
+            data = json.loads(body)
+        else:
+            data = kwargs
+
+        name = data.get('name', '')
+        summary = data.get('summary', '')
+        public = data.get('public', '')
+        private = data.get('private', '')
+        tags = data.get('tags', '')
+        image_data = data.get('image_data', '')
+        image_embed = ''  # will be set if we upload the image
+
         slug = name.lower().replace(' ', '-')
-        tags = filter(bool, map(str.strip, tags.split(',')))
-        r = op.create_character(name, summary=summary, tags=tags, description=public, gm_info=private)
+        tags_list = list(filter(bool, map(str.strip, tags.split(','))))
+
+        description = public
+
+        # If we have image data, upload it first and prepend the embed
+        if image_data:
+            try:
+                # Decode base64 image data
+                image_bytes = base64.b64decode(image_data)
+
+                # Create a safe filename from the character name
+                safe_name = re.sub(r'[^a-zA-Z0-9]', '', name.replace(' ', ''))
+                filename = f'{safe_name}.png'
+
+                # Upload the image
+                file_info = op.upload_image(image_bytes, filename)
+                file_id = file_info.get('id')
+
+                if file_id:
+                    image_embed = f'[[File:{file_id} | class=media-item-align-none | {filename}]]'
+
+            except Exception as e:
+                cherrypy.log(f'Failed to upload image: {e}\n{traceback.format_exc()}')
+                raise
+
+        r = op.create_character(name, summary=summary, tags=tags_list, description=description, bio=image_embed, gm_info=private)
         return {
             'view_url': config['campaign_url'] + '/characters/' + slug,
             'edit_url': config['campaign_url'] + '/characters/' + slug + '/edit'
         }
+
+    @ajax
+    def art_prompt(self, **character_data):
+        """
+        Generate a suggested art prompt based on character data.
+        The frontend sends the character dict and we return a prompt string.
+        """
+        # Convert string representations back to appropriate types
+        if 'traits' in character_data and isinstance(character_data['traits'], str):
+            character_data['traits'] = [t.strip() for t in character_data['traits'].split(',') if t.strip()]
+        if 'xp' in character_data:
+            character_data['xp'] = int(character_data['xp'])
+        return {'prompt': art.generate_prompt(character_data)}
+
+    @ajax
+    def generate_art(self, prompt: str):
+        """
+        Generate an image from the given prompt.
+        Returns base64-encoded image data.
+        """
+        try:
+            image_data = art.generate_image_base64(prompt)
+            return {'image': image_data, 'error': None}
+        except Exception as e:
+            return {'image': None, 'error': str(e)}
 
 
 cherrypy.tree.mount(Root(), '/')
