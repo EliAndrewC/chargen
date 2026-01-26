@@ -109,7 +109,7 @@ def _get_authenticity_token():
     return token
 
 
-def create_character(name, *, summary='', tags=None, description='', bio='', gm_info=''):
+def create_character(name, *, summary='', tags=None, description='', bio='', gm_info='', avatar_upload_id=''):
     """
     Create a character in Obsidian Portal by simulating browser form submission.
 
@@ -120,6 +120,7 @@ def create_character(name, *, summary='', tags=None, description='', bio='', gm_
         description: The public description
         bio: The character's biography
         gm_info: GM-only information
+        avatar_upload_id: The upload ID from upload_avatar() for the character thumbnail
 
     Returns:
         requests.Response: The response from the server
@@ -144,7 +145,7 @@ def create_character(name, *, summary='', tags=None, description='', bio='', gm_
         'game_character[gm_only]': '0',
         'game_character[hide_stats]': '0',
         'commit': 'Create',
-        'new_avatar_upload_id': '',
+        'new_avatar_upload_id': avatar_upload_id,
     }
 
     response = session.post(f'{campaign_url}/characters', data=payload)
@@ -174,6 +175,7 @@ def create_character(name, *, summary='', tags=None, description='', bio='', gm_
 def upload_image(image_data: bytes, filename: str) -> dict:
     """
     Upload an image to Obsidian Portal and return the file info.
+    This uploads to /files for embedding in character bio sections.
 
     Args:
         image_data: The raw PNG image bytes
@@ -224,6 +226,60 @@ def upload_image(image_data: bytes, filename: str) -> dict:
     elif response.status_code == 403:
         raise ValueError(
             'Failed to upload image (403). The session_cookie may have '
+            'expired. Update it in development-secrets.ini.'
+        )
+    else:
+        response.raise_for_status()
+
+
+def upload_avatar(image_data: bytes, filename: str) -> dict:
+    """
+    Upload an avatar/thumbnail image to Obsidian Portal.
+    This uploads to /uploads with upload_type=character_avatar.
+
+    Args:
+        image_data: The raw PNG image bytes
+        filename: The filename to use (e.g., "CharacterName.png")
+
+    Returns:
+        dict: The response from the server containing 'id', 'filename', etc.
+    """
+    session = _get_browser_session()
+    campaign_url = _get_campaign_base_url()
+
+    url = f'{campaign_url}/uploads'
+
+    # Update headers for JSON response and AJAX request
+    session.headers.update({
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+    })
+    # Remove Content-Type so requests can set it properly for multipart
+    if 'Content-Type' in session.headers:
+        del session.headers['Content-Type']
+
+    # Multipart form data with upload_type field
+    files = {
+        'file[0]': (filename, image_data, 'image/png')
+    }
+    data = {
+        'upload_type': 'character_avatar'
+    }
+
+    response = session.post(url, files=files, data=data)
+
+    if response.status_code == 200:
+        result = response.json()
+        cherrypy.log(f'Uploaded avatar: {filename} with id {result.get("id")}')
+        return result
+    elif response.status_code == 422:
+        raise ValueError(
+            'Failed to upload avatar (422). The authenticity_token may '
+            'have expired. Update it in development-secrets.ini.'
+        )
+    elif response.status_code == 403:
+        raise ValueError(
+            'Failed to upload avatar (403). The session_cookie may have '
             'expired. Update it in development-secrets.ini.'
         )
     else:
