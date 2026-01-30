@@ -122,6 +122,7 @@ CLAN_COLORS = {
     'Phoenix': 'red and orange',
     'Scorpion': 'black and dark red',
     'Unicorn': 'purple and white with gold trim',
+    'Imperial': 'dark green with gold trim and fine chrysanthemum embroidery',
     'Sparrow': 'dun brown and black',
     'Fox': 'green and silver',
     'Wasp': 'black and gold',
