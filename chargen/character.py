@@ -141,11 +141,20 @@ class Character:
         specify what lineage they are from (e.g. when they're from a long way
         off and thus their home lineage politics wouldn't matter).  This returns
         a list of applicable tags for this character.
+
+        For minor clans with only one family or one house, we omit those tags
+        since they convey no information (e.g. all Wasp are Tsuruchi).
         """
+        # Check if family/house tags would be redundant (only one choice)
+        clan_families = config['clan'].get(self.clan, {})
+        family_houses = config['family'].get(self.family, {})
+        has_multiple_families = len(clan_families) > 1
+        has_multiple_houses = len(family_houses) > 1
+
         return list(filter(None, [
             self.clan and (self.clan_display + (' Clan' if self.clan != 'imperial' else '')),
-            self.family and (self.family_display + ' Family'),
-            self.house and (self.house_display + ' House'),
+            self.family and has_multiple_families and (self.family_display + ' Family'),
+            self.house and has_multiple_houses and (self.house_display + ' House'),
             self.lineage and (self.lineage_display + ' Lineage')
         ]))
 
@@ -185,9 +194,11 @@ class Samurai(Character):
 
         Character.__init__(self)
 
+        # Omit "no [house]" if the house name is the same as the family name
+        include_house = self.house and self.house != self.family
         self.full_name = ' '.join(filter(None, [
             self.family_display,
-            'no {}'.format(self.house_display) if self.house else '',
+            'no {}'.format(self.house_display) if include_house else '',
             self.personal_name
         ]))
 
