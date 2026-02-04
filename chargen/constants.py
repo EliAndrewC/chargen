@@ -157,7 +157,7 @@ SAMURAI_TRAITS = {
 """Some traits are only valid for samurai, and not monks or peasants."""
 
 COLLECTABLES = [
-    {'name': 'arrows from famous battles', 'art': 'a quiver of mismatched, ornate arrows'},
+    {'name': 'arrows from famous battles', 'art': 'a single ornate arrow in her hands brightly colored fletching'},
     {'name': 'tsuba (sword guards)', 'art': 'ornate sword guards worn as pendants'},
     {'name': 'whetstones', 'art': 'fine whetstones of varying color tucked into the obi'},
     {'name': 'tea cups and sake cups', 'art': 'a delicate porcelain cup carried carefully in hand'},
