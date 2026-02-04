@@ -245,7 +245,7 @@ def generate_prompt(character: dict) -> str:
     # Determine clothing/role - always use kimono for samurai to avoid armor
     school = character.get('school', '').lower()
     if 'bushi' in school:
-        clothing = 'a formal kimono'
+        clothing = 'a formal kimono and is not wearing armor'
     elif 'courtier' in school or 'diplomat' in school or 'artisan' in school:
         clothing = 'elegant formal court robes'
     elif 'merchant' in school:
@@ -270,7 +270,7 @@ def generate_prompt(character: dict) -> str:
 
     # For women, specify no makeup unless they have the fine makeup trait
     if gender == 'female' and not has_fine_makeup:
-        lines.append(f'-> {pronoun.title()} is not wearing any makeup and has nothing in her hair')
+        lines.append(f'-> {pronoun.title()} is not wearing any makeup and has plain unstyled black hair')
 
     if trait_descriptions:
         lines.append(f'-> {"; ".join(trait_descriptions)}')
