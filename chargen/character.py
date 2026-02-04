@@ -61,6 +61,13 @@ class Character:
         self.xp = self.gen_xp()
         self.honor = self.gen_honor()
         self.traits = self.gen_traits()
+        self.collects = ''
+        if 'collector' in self.traits:
+            item = choice(c.COLLECTABLES)
+            self.collects = item['name']
+            self.collects_art = item['art']
+            # Replace generic trait with specific one
+            self.traits[self.traits.index('collector')] = f'collects {item["name"]}'
         self.tags = self.gen_tags()
         self.id = str(randrange(1e9))
 
@@ -120,18 +127,22 @@ class Character:
         else:
             return rounded(base - abs(normalvariate(0, 0.5)), minval=1)
 
+    def _trait_pool(self) -> dict:
+        """Returns the pool of possible traits for this character type."""
+        return dict(c.TRAITS, **c.GENDER_TRAITS[self.gender])
+
     def gen_traits(self) -> list[str]:
         """Returns a list of randomly generated traits for this character."""
         traits = []
-        for trait, chance in dict(c.TRAITS, **c.GENDER_TRAITS[self.gender]).items():
-            if '/' in trait:
+        for trait, chance in self._trait_pool().items():
+            if '/' in trait and isinstance(chance, tuple):
                 for subtrait, subchance in zip(trait.split('/'), chance):
                     if random() < subchance:
                         traits.append(subtrait.strip())
                         break
             else:
                 if random() < chance:
-                    traits.append(trait)
+                    traits.append(trait if '/' not in trait else choice(trait.split('/')).strip())
         return sorted(traits)
 
     def gen_tags(self) -> list[str]:
@@ -201,6 +212,10 @@ class Samurai(Character):
             'no {}'.format(self.house_display) if include_house else '',
             self.personal_name
         ]))
+
+    def _trait_pool(self) -> dict:
+        """Samurai get additional samurai-specific traits."""
+        return dict(Character._trait_pool(self), **c.SAMURAI_TRAITS)
 
     def gen_tags(self) -> list[str]:
         return Character.gen_tags(self) + ([config['ranks']['Samurai'][str(self.base_rank)]] if self.base_rank > 4 else [])

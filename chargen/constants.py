@@ -2,7 +2,7 @@ import os
 
 from chargen import config, __here__ as HERE
 
-__all__ = ['HERE', 'NAMES', 'USED_NAMES', 'XP_DIST', 'TRAITS', 'GENDER_TRAITS', 'MINISTRIES']
+__all__ = ['HERE', 'NAMES', 'USED_NAMES', 'XP_DIST', 'TRAITS', 'GENDER_TRAITS', 'SAMURAI TRAITS', 'MINISTRIES']
 
 
 NAMES = {}
@@ -62,27 +62,68 @@ TRAITS = {
     'Dark Secret': 0.01,
     'Driven': 0.02,
     'Emotional': 0.05,
+    'Geneologist': 0.05,
     'Humble': 0.05,
     'Transparent': 0.05,
     'Thoughtless': 0.05,
 
     'thin / fat': (0.05, 0.05),
     'short / tall': (0.05, 0.05),
-    'big nose / big ears': (0.01, 0.01),
+    'big nose / big ears': (0.02, 0.02),
     'boisterous / soft-spoken': (0.05, 0.05),
-    'missing tooth / missing finger': (0.01, 0.01),
-    'dour / scowling / furrowed / frowny / squinty': (0.01, 0.01, 0.01, 0.01, 0.01),
-    'jolly / happy / lighthearted / mirthful / upbeat': (0.01, 0.01, 0.01, 0.01, 0.01),
+    'missing tooth / missing finger / missing eye / missing ear': (0.02, 0.02, 0.02, 0.02),
+    'dour / scowling / furrowed / frowny / squinty': (0.02, 0.02, 0.02, 0.02, 0.02),
+    'jolly / happy / lighthearted / mirthful / upbeat': (0.02, 0.02, 0.02, 0.02, 0.02),
     'quick to speak / pauses before speaking': (0.05, 0.05),
     'deferential / outspoken': (0.10, 0.05),
+    'speaks quickly / speaks slowly': (0.02, 0.02),
+    'constantly clearing throat / constantly sniffling / takes deep breaths / heavy sighs / clucks tongue / clicks tongue / says "hmmmmm" before speaking': (0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02),
+    'visibly torn and sewn clothing / visibly patched clothing / visibly stained clothing / frayed seams and hems / frayed collar / faded clothes': (0.02, 0.02, 0.02, 0.02, 0.02, 0.02),
+    'military posture / slouches': (0.05, 0.05),
+    'intense expression / thoughtful expression': (0.05, 0.05),
+    'dry wheezing laugh / barking laugh / silent shaking laugh / nasal snort': (0.02, 0.02, 0.02, 0.02),
+    'monotone voice / gravelly voice / breathy voice': (0.02, 0.02, 0.02),
+    'eyes darting / always turning to the side': (0.05, 0.05),
+    'embittered / skeptical / trusting': (0.05, 0.05, 0.05),
+    'speaks about dreams / speaks about omens': (0.05, 0.05),
+    'having an affair / unrequited love / pining for a deceased lover / estranged from spouse': (0.05, 0.05, 0.05, 0.05),
 
-    'interrupting': 0.10,
     'tattooed': 0.05,
-    'collector': 0.05,
     'garishly dressed': 0.05,
     'pensive': 0.05,
-    'scarred': 0.01,
-    'hairy arms': 0.01,
+    'scarred': 0.05,
+    'hairy arms': 0.05,
+    'twitchy': 0.05,
+    'sweaty': 0.05,
+    'unusual haircut': 0.05,
+    'annoyed': 0.05,
+    'squinty': 0.05,
+    'flinching': 0.05,
+    'dark circles under eyes': 0.05,
+    'wears charms and amulets': 0.05,
+    'always looking up': 0.05,
+
+    'interrupting': 0.10,
+    'ambitious': 0.10,
+    'judgmental': 0.05,
+    'paranoid': 0.05,
+    'contemptuous': 0.05,
+    'superstitious': 0.10,
+    'drums fingers absentmindedly': 0.05,
+    'repeats your last word or phrase': 0.05,
+    'spiritually insightful': 0.05,
+    'indebted to a rival': 0.05,
+    'favor-seeking': 0.05,
+    'caught between two masters': 0.05,
+    'personally hated by an enemy': 0.05,
+    'feuding with family': 0.05,
+    'black sheep': 0.05,
+    'gossipy': 0.20,
+    'waiting for a relative to die': 0.10,
+    'chronically apologetic': 0.10,
+    'religiously unorthodox': 0.10,
+    'muses to themselves out loud': 0.05,
+    'raising an acknowledged bastard child': 0.05,
 }
 """
 When randomly generating traits, we iterate through this list; the keys are the
@@ -96,6 +137,45 @@ represent it as e.g.
 
 which means that there's a 10% chance of Vain and a 5% chance of Unkempt.  This
 is implemented via the gen_traits() method in character.py
+"""
+
+SAMURAI_TRAITS = {
+    'collector': 0.05,
+    'sword-calloused / ghost grip / silk-handed': (0.10, 0.10, 0.10),
+    'ink-stained cuticles': 0.05,
+    "archer's thumb": 0.05,
+    'in debt to peasant merchants': 0.05,
+    'hides hands in sleeves': 0.05,
+    'sympathetic to family rivals': 0.05,
+    'seeking a lost heirloom': 0.05,
+    'haunted by a failed duty': 0.05,
+    "resentful about another's promotion": 0.05,
+    'always asking whether something is official or on behalf of a superior': 0.05,
+    'keeping a deathbed secret': 0.05,
+    'incense-scented / purfumed / overly purfumed / smells of horse': (0.10, 0.10, 0.05, 0.05),
+}
+"""Some traits are only valid for samurai, and not monks or peasants."""
+
+COLLECTABLES = [
+    {'name': 'arrows from famous battles', 'art': 'a quiver of mismatched, ornate arrows'},
+    {'name': 'tsuba (sword guards)', 'art': 'ornate sword guards worn as pendants'},
+    {'name': 'whetstones', 'art': 'fine whetstones of varying color tucked into the obi'},
+    {'name': 'tea cups and sake cups', 'art': 'a delicate porcelain cup carried carefully in hand'},
+    {'name': 'cicada husks', 'art': 'translucent cicada shells pinned to the kimono'},
+    {'name': 'signed poetry scrolls', 'art': 'a calligraphy scroll case slung over one shoulder'},
+    {'name': 'tea caddies', 'art': 'a small lacquered tea caddy held reverently'},
+    {'name': 'bird feathers', 'art': 'colorful feathers tucked into the hair and clothing'},
+    {'name': 'samples of dirt', 'art': 'small cloth pouches of earth hanging from the obi'},
+    {'name': 'dried wildflowers', 'art': 'pressed dried wildflowers adorning the lapel'},
+    {'name': 'river stones', 'art': 'smooth river stones worn as ornaments on a cord'},
+    {'name': 'cricket cages', 'art': 'a small hand-carved bamboo cricket cage at the hip'},
+    {'name': 'prayer beads found on the road', 'art': 'a necklace of mismatched prayer beads'},
+    {'name': 'wax seal impressions', 'art': 'scraps of wax-sealed paper tucked into the obi'},
+]
+"""
+When a character has the 'collector' trait, one of these items is randomly
+selected as the specific thing they collect.  The 'name' is used in the
+character description and the 'art' is the visual detail for the image prompt.
 """
 
 GENDER_TRAITS = {

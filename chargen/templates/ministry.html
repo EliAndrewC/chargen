@@ -444,7 +444,8 @@
                         clan: char.clan || '',
                         school: char.school || '',
                         xp: char.xp || 200,
-                        traits: (char.traits || []).join(', ')
+                        traits: (char.traits || []).join(', '),
+                        collects_art: char.collects_art || ''
                     }, function(resp) {
                         $('#prompt-' + idx).val(resp.prompt).show();
                         $('#generate-art-' + idx).show();
@@ -566,7 +567,8 @@
                             clan: char.clan || '',
                             school: char.school || '',
                             xp: char.xp || 200,
-                            traits: (char.traits || []).join(', ')
+                            traits: (char.traits || []).join(', '),
+                            collects_art: char.collects_art || ''
                         }, function(resp) {
                             $('#prompt-' + idx).val(resp.prompt).show();
                             $('#generate-art-' + idx).show();

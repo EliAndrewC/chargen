@@ -86,44 +86,161 @@ def generate_prompt(character: dict) -> str:
     clan = character.get('clan', '').title()
     clan_colors = c.CLAN_COLORS.get(clan, '')
 
-    # Estimate age based on XP (rough heuristic)
-    xp = character.get('xp', 150)
-    if xp < 175:
-        age_desc = 'early 20s'
-    elif xp < 225:
-        age_desc = 'late 20s'
-    elif xp < 275:
-        age_desc = '30s'
-    elif xp < 350:
-        age_desc = '40s'
-    else:
-        age_desc = '50s or older'
+    # Random age on a bell curve centered around mid-30s, shifted by XP
+    # Higher XP characters tend to be older (~5 years per 75 XP above baseline)
+    import random
+    age_options = [
+        'late teens',
+        'early 20s',
+        'late 20s',
+        'early 30s',
+        'mid-30s',
+        'late 30s',
+        'early 40s',
+        'late 40s',
+        '50s',
+        '60s or older',
+    ]
+    # Bell curve weights centered on index 4 (mid-30s)
+    base_weights = [5, 15, 25, 35, 40, 35, 25, 15, 10, 5]
+
+    # Calculate XP-based shift (50 XP = baseline, +75 XP = +1 age bracket)
+    xp = character.get('xp', 50)
+    xp_shift = (xp - 50) / 75.0
+
+    # Pick from base distribution, then apply XP shift
+    base_index = random.choices(range(len(age_options)), weights=base_weights)[0]
+    shifted_index = base_index + xp_shift
+    # Add a little randomness to the shift (+/- 0.5 brackets)
+    shifted_index += random.uniform(-0.5, 0.5)
+    # Clamp to valid range
+    final_index = max(0, min(len(age_options) - 1, round(shifted_index)))
+    age_desc = age_options[final_index]
 
     # Build character description from traits
+    # Only traits that would be visually apparent in a portrait are included
     traits = character.get('traits', [])
     trait_descriptions = []
     for trait in traits:
         trait_lower = trait.lower()
+
+        # Hair and facial hair
         if trait_lower in ['balding', 'bearded', 'long beard', 'bushy beard', 'mustachioed']:
             trait_descriptions.append(f'{pronoun} has {trait_lower} features')
+        elif trait_lower == 'unusual haircut':
+            trait_descriptions.append(f'{pronoun} has an unusual, distinctive hairstyle')
+
+        # Body type
         elif trait_lower in ['thin', 'fat', 'short', 'tall']:
             trait_descriptions.append(f'{pronoun} is {trait_lower}')
+        elif trait_lower == 'pregnant':
+            trait_descriptions.append(f'{pronoun} is visibly pregnant')
+
+        # Facial features
+        elif trait_lower == 'big nose':
+            trait_descriptions.append(f'{pronoun} has a notably large nose')
+        elif trait_lower == 'big ears':
+            trait_descriptions.append(f'{pronoun} has notably large ears')
+        elif trait_lower == 'dark circles under eyes':
+            trait_descriptions.append(f'{pronoun} has dark circles under {possessive} eyes')
+        elif trait_lower == 'hairy arms':
+            trait_descriptions.append(f'{pronoun} has notably hairy arms')
+        elif trait_lower == 'sweaty':
+            trait_descriptions.append(f'{pronoun} appears sweaty with glistening perspiration')
+
+        # Injuries and marks
         elif trait_lower == 'scarred':
             trait_descriptions.append(f'{pronoun} has visible scars')
         elif trait_lower == 'tattooed':
             trait_descriptions.append(f'{pronoun} has visible tattoos')
         elif trait_lower == 'permanent wound':
             trait_descriptions.append(f'{pronoun} shows signs of an old injury')
-        elif trait_lower == 'garishly dressed':
-            trait_descriptions.append(f'{pronoun} wears flamboyant, eye-catching clothing')
+        elif trait_lower == 'missing tooth':
+            trait_descriptions.append(f'{pronoun} has a missing tooth')
+        elif trait_lower == 'missing finger':
+            trait_descriptions.append(f'{pronoun} has a missing finger')
+        elif trait_lower == 'missing eye':
+            trait_descriptions.append(f'{pronoun} has a missing eye')
+        elif trait_lower == 'missing ear':
+            trait_descriptions.append(f'{pronoun} has a missing ear')
+
+        # Expressions
         elif trait_lower in ['jolly', 'happy', 'lighthearted', 'mirthful', 'upbeat']:
             trait_descriptions.append(f'{pronoun} has a warm, cheerful expression')
         elif trait_lower in ['dour', 'scowling', 'furrowed', 'frowny', 'squinty']:
             trait_descriptions.append(f'{pronoun} has a stern, serious expression')
+        elif trait_lower == 'intense expression':
+            trait_descriptions.append(f'{pronoun} has an intense, piercing expression')
+        elif trait_lower == 'thoughtful expression':
+            trait_descriptions.append(f'{pronoun} has a thoughtful, contemplative expression')
+        elif trait_lower == 'pensive':
+            trait_descriptions.append(f'{pronoun} has a pensive, contemplative expression')
+        elif trait_lower == 'annoyed':
+            trait_descriptions.append(f'{pronoun} has an irritated, annoyed expression')
+        elif trait_lower == 'embittered':
+            trait_descriptions.append(f'{pronoun} has a bitter, hardened expression')
+        elif trait_lower == 'skeptical':
+            trait_descriptions.append(f'{pronoun} has a skeptical, doubting expression')
+        elif trait_lower == 'contemptuous':
+            trait_descriptions.append(f'{pronoun} has a contemptuous, disdainful expression')
+        elif trait_lower == 'kind eye':
+            trait_descriptions.append(f'{pronoun} has kind, warm eyes')
+        elif trait_lower == 'paranoid':
+            trait_descriptions.append(f'{pronoun} has a wary, suspicious look')
+
+        # Eyes and gaze
+        elif trait_lower == 'eyes darting':
+            trait_descriptions.append(f'{pronoun} has alert, darting eyes')
+        elif trait_lower == 'always looking up':
+            trait_descriptions.append(f'{pronoun} is gazing upward')
+        elif trait_lower == 'always turning to the side':
+            trait_descriptions.append(f'{possessive.title()} head is turned slightly to the side')
+        elif trait_lower == 'flinching':
+            trait_descriptions.append(f'{pronoun} has a flinching, guarded posture')
+        elif trait_lower == 'twitchy':
+            trait_descriptions.append(f'{pronoun} appears nervous and twitchy')
+
+        # Posture
+        elif trait_lower == 'military posture':
+            trait_descriptions.append(f'{pronoun} has rigid, upright military posture')
+        elif trait_lower == 'slouches':
+            trait_descriptions.append(f'{pronoun} has a slouching posture')
+
+        # Clothing and appearance
+        elif trait_lower == 'garishly dressed':
+            trait_descriptions.append(f'{pronoun} wears flamboyant, eye-catching clothing')
+        elif trait_lower == 'vain':
+            trait_descriptions.append(f'{pronoun} has an impeccably groomed appearance')
+        elif trait_lower == 'unkempt':
+            trait_descriptions.append(f'{pronoun} has a disheveled, untidy appearance')
+        elif trait_lower in ['visibly torn and sewn clothing', 'visibly patched clothing',
+                             'visibly stained clothing', 'frayed seams and hems',
+                             'frayed collar', 'faded clothes']:
+            trait_descriptions.append(f'{pronoun} wears {trait_lower}')
+
+        # Accessories and adornment
         elif trait_lower == 'fine makeup':
             trait_descriptions.append(f'{pronoun} wears elegant makeup')
+        elif trait_lower == 'inexpert makeup':
+            trait_descriptions.append(f'{pronoun} wears poorly applied makeup')
         elif trait_lower == 'jewelried':
             trait_descriptions.append(f'{pronoun} wears fine jewelry')
+        elif trait_lower == 'wears charms and amulets':
+            trait_descriptions.append(f'{pronoun} wears various charms and amulets')
+
+        # Samurai-specific visual traits
+        elif trait_lower == 'hides hands in sleeves':
+            trait_descriptions.append(f'{possessive.title()} hands are hidden inside {possessive} sleeves')
+        elif trait_lower == 'sword-calloused':
+            trait_descriptions.append(f'{pronoun} has rough, calloused hands')
+        elif trait_lower == 'ink-stained cuticles':
+            trait_descriptions.append(f'{pronoun} has ink stains on {possessive} fingers')
+
+        # Collector trait - use the art-specific description
+        elif trait_lower.startswith('collects '):
+            collects_art = character.get('collects_art', '')
+            if collects_art:
+                trait_descriptions.append(f'{pronoun} has {collects_art}')
 
     # Determine clothing/role - always use kimono for samurai to avoid armor
     school = character.get('school', '').lower()
@@ -141,7 +258,7 @@ def generate_prompt(character: dict) -> str:
 
     # Build the prompt
     lines = [
-        f'A portrait of a {"samurai" if clan else "person"} from {"the " + clan + " clan" if clan else "Rokugan"}.',
+        f'A portrait of a {"noble" if clan else "person"} from {"the " + clan + " clan" if clan else "Rokugan"}.',
         '',
         f'-> {pronoun.title()} is in {possessive} {age_desc}',
     ]
@@ -153,7 +270,7 @@ def generate_prompt(character: dict) -> str:
 
     # For women, specify no makeup unless they have the fine makeup trait
     if gender == 'female' and not has_fine_makeup:
-        lines.append(f'-> {pronoun.title()} is not wearing any makeup')
+        lines.append(f'-> {pronoun.title()} is not wearing any makeup and has nothing in her hair')
 
     if trait_descriptions:
         lines.append(f'-> {"; ".join(trait_descriptions)}')

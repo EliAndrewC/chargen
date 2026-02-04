@@ -116,7 +116,8 @@
                                 clan: character.clan || '',
                                 school: character.school || '',
                                 xp: character.xp || 150,
-                                traits: (character.traits || []).join(', ')
+                                traits: (character.traits || []).join(', '),
+                                collects_art: character.collects_art || ''
                             }, function(resp) {
                                 dom.$art_prompt.val(resp.prompt);
                                 dom.$generate_art.prop('disabled', false);
