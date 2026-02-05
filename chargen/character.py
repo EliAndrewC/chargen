@@ -131,10 +131,10 @@ class Character:
         """Returns the pool of possible traits for this character type."""
         return dict(c.TRAITS, **c.GENDER_TRAITS[self.gender])
 
-    def gen_traits(self) -> list[str]:
-        """Returns a list of randomly generated traits for this character."""
+    def _roll_traits(self, pool: dict) -> list[str]:
+        """Roll for traits from a given pool, returning those that were selected."""
         traits = []
-        for trait, chance in self._trait_pool().items():
+        for trait, chance in pool.items():
             if '/' in trait and isinstance(chance, tuple):
                 for subtrait, subchance in zip(trait.split('/'), chance):
                     if random() < subchance:
@@ -144,6 +144,14 @@ class Character:
                 if random() < chance:
                     traits.append(trait if '/' not in trait else choice(trait.split('/')).strip())
         return sorted(traits)
+
+    def gen_traits(self) -> list[str]:
+        """Returns a list of randomly generated traits for this character.
+        Advantages and disadvantages are always listed first.
+        """
+        advantages = self._roll_traits(c.ADVANTAGES_AND_DISADVANTAGES)
+        traits = self._roll_traits(self._trait_pool())
+        return advantages + traits
 
     def gen_tags(self) -> list[str]:
         """
@@ -204,6 +212,11 @@ class Samurai(Character):
         self.school = school or weighted_choice(config['schools'].get(self.clan, config['schools']['default']))
 
         Character.__init__(self)
+
+        # Wasp clan Ren lineage samurai are peasantborn
+        if self.clan == 'wasp' and self.lineage == 'ren':
+            self.traits.append('Peasantborn')
+            self.traits.sort()
 
         # Omit "no [house]" if the house name is the same as the family name
         include_house = self.house and self.house != self.family
