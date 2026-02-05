@@ -2,7 +2,7 @@ import os
 
 from chargen import config, __here__ as HERE
 
-__all__ = ['HERE', 'NAMES', 'USED_NAMES', 'XP_DIST', 'TRAITS', 'GENDER_TRAITS', 'SAMURAI TRAITS', 'MINISTRIES']
+__all__ = ['HERE', 'NAMES', 'USED_NAMES', 'XP_DIST', 'TRAITS', 'ADVANTAGES_AND_DISADVANTAGES', 'GENDER_TRAITS', 'SAMURAI TRAITS', 'MINISTRIES']
 
 
 NAMES = {}
@@ -44,30 +44,7 @@ distribution which this represents.
 """
 
 TRAITS = {
-    'Poor / Wealthy': (0.20, 0.20),
-    'Vain / Unkempt': (0.10, 0.05),
-    'Virtue / Unconventional': (0.10, 0.05),
-
-    'Short Temper': 0.10,
-    'Long Temper': 0.10,
-    'Contrary': 0.15,
-    'Good Reputation': 0.10,
-
-    'Bad Reputation': 0.05,
-    'Imperial Favor': 0.05,
-    'Kind Eye': 0.10,
-    'Jealousy': 0.05,
-    'Permanent Wound': 0.10,
-
-    'Dark Secret': 0.01,
-    'Driven': 0.02,
-    'Emotional': 0.05,
-    'Geneologist': 0.05,
-    'Humble': 0.05,
-    'Transparent': 0.05,
-    'Thoughtless': 0.05,
-
-    'thin / fat': (0.05, 0.05),
+    'thin / fat': (0.10, 0.05),
     'short / tall': (0.05, 0.05),
     'big nose / big ears': (0.02, 0.02),
     'boisterous / soft-spoken': (0.05, 0.05),
@@ -133,11 +110,37 @@ are advantages/disadvantages and others are general descriptions.
 Some traits are mutually exclusive with one anopther, so in those cases we
 represent it as e.g.
 
-    'Vain / Unkempt': (0.10, 0.05)
+    'thin / fat': (0.10, 0.05)
 
-which means that there's a 10% chance of Vain and a 5% chance of Unkempt.  This
+which means that there's a 10% chance of thin and a 5% chance of fat.  This
 is implemented via the gen_traits() method in character.py
 """
+
+ADVANTAGES_AND_DISADVANTAGES = {
+    'Poor / Wealthy': (0.20, 0.20),
+    'Vain / Unkempt': (0.10, 0.05),
+    'Virtue / Unconventional': (0.10, 0.05),
+
+    'Short Temper': 0.10,
+    'Long Temper': 0.10,
+    'Contrary': 0.15,
+    'Good Reputation': 0.10,
+
+    'Bad Reputation': 0.05,
+    'Imperial Favor': 0.05,
+    'Kind Eye': 0.10,
+    'Jealousy': 0.05,
+    'Permanent Wound': 0.10,
+
+    'Dark Secret': 0.01,
+    'Driven': 0.02,
+    'Emotional': 0.05,
+    'Geneologist': 0.05,
+    'Humble': 0.05,
+    'Transparent': 0.05,
+    'Thoughtless': 0.05,
+}
+"""These are the same as any other traits, but with rules-based mechanical effects."""
 
 SAMURAI_TRAITS = {
     'collector': 0.05,
