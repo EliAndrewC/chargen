@@ -24,6 +24,10 @@
                         $dest.append(
                             $('<option></option>').attr('value', val).text(val.title()));
                     });
+                    var options = $dest.find('option[value!=""]');
+                    if (options.length === 1) {
+                        $dest.val(options.first().val()).change();
+                    }
                 });
             };
 
