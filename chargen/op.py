@@ -286,18 +286,66 @@ def upload_avatar(image_data: bytes, filename: str) -> dict:
         response.raise_for_status()
 
 
-def existing_names():
+def _scrape_characters_page(session, url):
     """
-    Returns a list of all character names for the campaign by scraping
-    the characters page.
+    Scrape a single characters listing page and return a list of dicts with
+    name, slug, tags, and description for each character on the page.
+    """
+    response = session.get(url)
+    if response.status_code != 200:
+        cherrypy.log(f'Failed to fetch characters page: {response.status_code}')
+        return [], False
 
-    This fetches the campaign's /characters page and extracts names from
-    the character links. Handles pagination if present.
+    soup = BeautifulSoup(response.text, 'html.parser')
+    characters = []
+
+    for item in soup.find_all('div', class_='content-list-item'):
+        card = item.find('div', class_='content-info')
+        if not card:
+            continue
+        name_tag = card.find('h4', class_='character-name')
+        if not name_tag:
+            continue
+        link = name_tag.find('a', href=re.compile(r'^/characters/[^/]+$'))
+        if not link or link['href'].endswith('/new'):
+            continue
+
+        name = link.get_text(strip=True)
+        if not name:
+            continue
+
+        slug = link['href'].split('/')[-1]
+        tags = [a['data-tag'] for a in card.find_all('a', class_='tag-link') if a.get('data-tag')]
+        desc_div = card.find('div', class_='description-text')
+        description = desc_div.get('title', '') if desc_div else ''
+
+        img = item.find('img', class_='game-content-image')
+        avatar_url = img['src'] if img and img.get('src') else ''
+
+        characters.append({
+            'name': name,
+            'slug': slug,
+            'tags': tags,
+            'description': description,
+            'avatar_url': avatar_url,
+        })
+
+    has_next = soup.find('a', rel='next') is not None
+    return characters, has_next
+
+
+def existing_characters():
+    """
+    Returns a list of dicts for all characters in the campaign, each containing
+    'name', 'slug', 'tags' (list of strings), and 'description'.
+
+    Scrapes the campaign's /characters listing page which includes tags
+    and tagline for each character. Handles pagination.
     """
     try:
         session = _get_browser_session()
         campaign_url = _get_campaign_base_url()
-        names = []
+        all_characters = []
         page = 1
 
         while True:
@@ -305,51 +353,45 @@ def existing_names():
             if page > 1:
                 url += f'?page={page}'
 
-            response = session.get(url)
-            if response.status_code != 200:
-                cherrypy.log(f'Failed to fetch characters page: {response.status_code}')
+            characters, has_next = _scrape_characters_page(session, url)
+            if not characters:
                 break
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            all_characters.extend(characters)
 
-            # Find all character links - they match /characters/<slug> but not
-            # /characters/new or /characters/<slug>/edit
-            char_pattern = re.compile(r'^/characters/[^/]+$')
-            char_links = soup.find_all('a', href=char_pattern)
-
-            page_names = []
-            for link in char_links:
-                href = link.get('href', '')
-                # Skip the "new" link
-                if href.endswith('/new'):
-                    continue
-                name = link.get_text(strip=True)
-                if name:
-                    page_names.append(name)
-
-            if not page_names:
-                # No more characters found, stop pagination
-                break
-
-            names.extend(page_names)
-
-            # Check for next page link
-            next_link = soup.find('a', rel='next')
-            if not next_link:
-                # No pagination or reached last page
+            if not has_next:
                 break
 
             page += 1
-            # Safety limit to avoid infinite loops
             if page > 100:
                 cherrypy.log('Reached pagination limit of 100 pages')
                 break
 
-        return names
+        return all_characters
 
     except Exception as e:
-        cherrypy.log(f'Failed to fetch existing names: {e}')
+        cherrypy.log(f'Failed to fetch existing characters: {e}')
         return []
+
+
+def existing_names():
+    """
+    Returns a list of all character names for the campaign.
+    Wrapper around existing_characters() for backward compatibility.
+    """
+    return [char['name'] for char in existing_characters()]
+
+
+def characters_by_tag(tag):
+    """
+    Returns a list of character dicts that have the given tag.
+    Tag matching is case-insensitive.
+    """
+    tag_lower = tag.lower()
+    return [
+        char for char in existing_characters()
+        if any(t.lower() == tag_lower for t in char['tags'])
+    ]
 
 
 def update_used_names():
