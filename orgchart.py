@@ -51,6 +51,12 @@ def build_orgchart(fmt='png', output=None):
     escorts = find('Escort')
     stewards = find('Household Steward')
 
+    # Imperial magistrates (not Wasp, from the full character list)
+    imperial_magistrates = [
+        c for c in chars
+        if any(t == 'Imperial Magistrate' for t in c['tags'])
+    ]
+
     # Sort inspectors by domain name
     inspectors.sort(key=lambda c: c['description'])
 
@@ -153,11 +159,11 @@ def build_orgchart(fmt='png', output=None):
     # -- Clan clusters --
     # Map each inspector to a clan based on their domain
     clan_map = {
-        'Fox': {'color': '#5b8c5a', 'inspectors': [], 'escorts': [], 'steward': None},
-        'Sparrow': {'color': '#a08050', 'inspectors': [], 'escorts': [], 'steward': None},
-        'Crane': {'color': '#6b9bc3', 'inspectors': [], 'escorts': [], 'steward': None},
-        'Scorpion': {'color': '#c45555', 'inspectors': [], 'escorts': [], 'steward': None},
-        'Crab': {'color': '#7a8a99', 'inspectors': [], 'escorts': [], 'steward': None},
+        'Fox': {'color': '#5b8c5a', 'inspectors': [], 'magistrates': [], 'escorts': [], 'steward': None},
+        'Sparrow': {'color': '#a08050', 'inspectors': [], 'magistrates': [], 'escorts': [], 'steward': None},
+        'Crane': {'color': '#6b9bc3', 'inspectors': [], 'magistrates': [], 'escorts': [], 'steward': None},
+        'Scorpion': {'color': '#c45555', 'inspectors': [], 'magistrates': [], 'escorts': [], 'steward': None},
+        'Crab': {'color': '#7a8a99', 'inspectors': [], 'magistrates': [], 'escorts': [], 'steward': None},
     }
 
     domain_to_clan = {
@@ -168,10 +174,17 @@ def build_orgchart(fmt='png', output=None):
 
     for insp in inspectors:
         domain = re.sub(r'^Wasp [Ii]nspector for (the )?', '', insp['description'])
-        # Match domain name to clan
         for key, clan in domain_to_clan.items():
             if key.lower() in domain.lower():
                 clan_map[clan]['inspectors'].append(insp)
+                break
+
+    # Map Imperial magistrates to clans by domain
+    for mag in imperial_magistrates:
+        desc = mag.get('description', '')
+        for key, clan in domain_to_clan.items():
+            if key.lower() in desc.lower():
+                clan_map[clan]['magistrates'].append(mag)
                 break
 
     # Assign escorts and stewards to Fox/Sparrow
@@ -180,8 +193,9 @@ def build_orgchart(fmt='png', output=None):
     clan_map['Sparrow']['escorts'] = sparrow_escorts
     clan_map['Sparrow']['steward'] = sparrow_steward
 
-    def domain_cluster(name, label, color, clan_inspectors, clan_escorts,
-                       clan_steward, parent_id, show_domain_subtitle=True):
+    def domain_cluster(name, label, color, clan_inspectors, clan_magistrates,
+                       clan_escorts, clan_steward, parent_id,
+                       show_domain_subtitle=True):
         with g.subgraph(name=name) as s:
             s.attr(
                 label=f'<<FONT COLOR="{color}" POINT-SIZE="12"><B>{label}</B></FONT>>',
@@ -190,19 +204,39 @@ def build_orgchart(fmt='png', output=None):
                 bgcolor='#222222',
                 margin='16',
             )
+
+            # Imperial magistrates
+            for mag in clan_magistrates:
+                domain = re.sub(
+                    r'^Imperial magistrate for (the )?', '',
+                    mag.get('description', ''))
+                subtitle = domain if show_domain_subtitle else None
+                mag_id = add_char_node(mag, 'Imperial Magistrate',
+                                       subtitle=subtitle)
+                s.node(mag_id)
+
+            # Inspectors
             for insp in clan_inspectors:
-                domain = re.sub(r'^Wasp [Ii]nspector for (the )?', '', insp['description'])
+                domain = re.sub(r'^Wasp [Ii]nspector for (the )?', '',
+                                insp['description'])
                 subtitle = domain if show_domain_subtitle else None
                 insp_id = add_char_node(insp, 'Metsuke (Inspector)',
                                         subtitle=subtitle)
                 s.node(insp_id)
                 g.edge(parent_id, insp_id)
 
-                # Escorts reporting to this inspector
-                insp_escorts = [e for e in clan_escorts
-                                if e in clan_escorts]  # all clan escorts for now
-                if not insp_escorts:
-                    # Placeholder for unassigned escorts
+                # Find the matching magistrate for this inspector's domain
+                for mag in clan_magistrates:
+                    mag_desc = mag.get('description', '').lower()
+                    # Match by shared domain keywords
+                    for key in domain_to_clan:
+                        if (key.lower() in domain.lower() and
+                                key.lower() in mag_desc):
+                            g.edge(mag['slug'], insp['slug'])
+                            break
+
+                # Placeholder for unassigned escorts
+                if not clan_escorts:
                     display_name = re.sub(r'^Tsuruchi\s+', '', insp['name'])
                     placeholder_id = f'{insp["slug"]}_escorts'
                     g.node(placeholder_id,
@@ -245,6 +279,7 @@ def build_orgchart(fmt='png', output=None):
             f'{clan_name} Clan',
             info['color'],
             info['inspectors'],
+            info['magistrates'],
             info['escorts'],
             info['steward'],
             pc_id,
