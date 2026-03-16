@@ -232,7 +232,10 @@ def build_orgchart(fmt='png', output=None):
                     for key in domain_to_clan:
                         if (key.lower() in domain.lower() and
                                 key.lower() in mag_desc):
-                            g.edge(mag['slug'], insp['slug'])
+                            g.edge(mag['slug'], insp['slug'],
+                                   style='dashed', color='#888888',
+                                   arrowhead='none', arrowtail='normal',
+                                   dir='back')
                             break
 
                 # Placeholder for unassigned escorts
@@ -260,12 +263,15 @@ def build_orgchart(fmt='png', output=None):
                     s.node(escort_id)
                     g.edge(insp_id, escort_id)
 
-            # Steward
+            # Steward (peer to inspectors, one level below magistrates)
             if clan_steward:
                 steward_id = add_char_node(clan_steward, 'Household Steward')
                 s.node(steward_id)
-                g.edge(kyoma_id, steward_id, style='dashed', color='#888888',
-                       minlen='3')
+                g.edge(kyoma_id, steward_id, minlen='3')
+                # Invisible edge from a magistrate to force steward down a rank
+                if clan_magistrates:
+                    g.edge(clan_magistrates[0]['slug'], steward_id,
+                           style='invis')
 
     for clan_name, info in clan_map.items():
         if not info['inspectors']:
