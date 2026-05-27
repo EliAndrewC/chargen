@@ -205,17 +205,7 @@ def build_orgchart(fmt='png', output=None):
                 margin='16',
             )
 
-            # Imperial magistrates
-            for mag in clan_magistrates:
-                domain = re.sub(
-                    r'^Imperial magistrate for (the )?', '',
-                    mag.get('description', ''))
-                subtitle = domain if show_domain_subtitle else None
-                mag_id = add_char_node(mag, 'Imperial Magistrate',
-                                       subtitle=subtitle)
-                s.node(mag_id)
-
-            # Inspectors
+            # Inspectors first (so they appear on the left)
             for insp in clan_inspectors:
                 domain = re.sub(r'^Wasp [Ii]nspector for (the )?', '',
                                 insp['description'])
@@ -226,16 +216,16 @@ def build_orgchart(fmt='png', output=None):
                 g.edge(parent_id, insp_id)
 
                 # Find the matching magistrate for this inspector's domain
+                # Dashed line from magistrate down to inspector, arrow at top
                 for mag in clan_magistrates:
                     mag_desc = mag.get('description', '').lower()
-                    # Match by shared domain keywords
                     for key in domain_to_clan:
                         if (key.lower() in domain.lower() and
                                 key.lower() in mag_desc):
                             g.edge(mag['slug'], insp['slug'],
                                    style='dashed', color='#888888',
                                    arrowhead='none', arrowtail='normal',
-                                   dir='back')
+                                   dir='both')
                             break
 
                 # Placeholder for unassigned escorts
@@ -255,15 +245,7 @@ def build_orgchart(fmt='png', output=None):
                     s.node(placeholder_id)
                     g.edge(insp_id, placeholder_id, style='dashed', color='#666666')
 
-            # Escorts (report to the first/only inspector in this clan)
-            if clan_escorts and clan_inspectors:
-                insp_id = clan_inspectors[0]['slug']
-                for escort in sorted(clan_escorts, key=lambda c: c['name']):
-                    escort_id = add_char_node(escort, 'Gosonin (Escort)')
-                    s.node(escort_id)
-                    g.edge(insp_id, escort_id)
-
-            # Steward (peer to inspectors, one level below magistrates)
+            # Steward (peer to inspectors, appears between them and magistrate)
             if clan_steward:
                 steward_id = add_char_node(clan_steward, 'Household Steward')
                 s.node(steward_id)
@@ -272,6 +254,24 @@ def build_orgchart(fmt='png', output=None):
                 if clan_magistrates:
                     g.edge(clan_magistrates[0]['slug'], steward_id,
                            style='invis')
+
+            # Imperial magistrates (appear to the right)
+            for mag in clan_magistrates:
+                domain = re.sub(
+                    r'^Imperial magistrate for (the )?', '',
+                    mag.get('description', ''))
+                subtitle = domain if show_domain_subtitle else None
+                mag_id = add_char_node(mag, 'Imperial Magistrate',
+                                       subtitle=subtitle)
+                s.node(mag_id)
+
+            # Escorts (report to the first/only inspector in this clan)
+            if clan_escorts and clan_inspectors:
+                insp_id = clan_inspectors[0]['slug']
+                for escort in sorted(clan_escorts, key=lambda c: c['name']):
+                    escort_id = add_char_node(escort, 'Gosonin (Escort)')
+                    s.node(escort_id)
+                    g.edge(insp_id, escort_id)
 
     for clan_name, info in clan_map.items():
         if not info['inspectors']:
